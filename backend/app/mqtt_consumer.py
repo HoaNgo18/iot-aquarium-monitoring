@@ -1,5 +1,7 @@
 import logging
 import threading
+from collections.abc import Callable
+from typing import Any
 
 from paho.mqtt import client as mqtt
 from pydantic import ValidationError
@@ -7,14 +9,21 @@ from pydantic import ValidationError
 from app.config import Settings
 from app.database import SessionLocal
 from app.ingest import ingest_message, log_invalid_message
+from app.ingest import IngestResult
+from app.realtime import build_realtime_events
 
 
 logger = logging.getLogger(__name__)
 
 
 class MqttConsumer:
-    def __init__(self, settings: Settings) -> None:
+    def __init__(
+        self,
+        settings: Settings,
+        event_publisher: Callable[[dict[str, Any]], None] | None = None,
+    ) -> None:
         self.settings = settings
+        self.event_publisher = event_publisher
         self.connected = threading.Event()
         self.client = mqtt.Client(
             callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
@@ -52,6 +61,9 @@ class MqttConsumer:
         try:
             result = ingest_message(message.topic, message.payload, SessionLocal)
             logger.info("MQTT %s: %s", result, message.topic)
+            if result == IngestResult.STORED and self.event_publisher is not None:
+                for event in build_realtime_events(message.topic, message.payload, SessionLocal):
+                    self.event_publisher(event)
         except (ValueError, ValidationError) as exc:
             log_invalid_message(message.topic, exc)
         except Exception:

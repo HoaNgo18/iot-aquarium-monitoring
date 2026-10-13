@@ -3,7 +3,7 @@ from datetime import datetime
 import logging
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Response, status
+from fastapi import Depends, FastAPI, HTTPException, Query, Response, WebSocket, WebSocketDisconnect, status
 from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -13,6 +13,7 @@ from app.database import get_db
 from app.alerts import get_or_create_threshold
 from app.models import Alert, Device, Telemetry, Threshold
 from app.mqtt_consumer import MqttConsumer
+from app.realtime import RealtimeHub
 from app.schemas import (
     AlertResponse,
     DeviceResponse,
@@ -28,18 +29,31 @@ settings = get_settings()
 
 
 def create_app(start_background_services: bool = True) -> FastAPI:
-    consumer = MqttConsumer(settings)
+    realtime_hub = RealtimeHub()
+    consumer = MqttConsumer(settings, realtime_hub.publish_from_thread)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
+        realtime_hub.bind_running_loop()
         if start_background_services:
             consumer.start()
         yield
         if start_background_services:
             consumer.stop()
+        realtime_hub.unbind_loop()
 
     app = FastAPI(title=settings.app_name, version=settings.app_version, lifespan=lifespan)
     app.state.mqtt_consumer = consumer
+    app.state.realtime_hub = realtime_hub
+
+    @app.websocket("/ws")
+    async def websocket_endpoint(websocket: WebSocket, device_id: str | None = None) -> None:
+        await realtime_hub.connect(websocket, device_id)
+        try:
+            while True:
+                await websocket.receive_text()
+        except WebSocketDisconnect:
+            realtime_hub.disconnect(websocket)
 
     @app.get("/health", response_model=HealthResponse, tags=["system"])
     def health(response: Response, db: Session = Depends(get_db)) -> HealthResponse:
