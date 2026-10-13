@@ -1,0 +1,106 @@
+name: ${COMPOSE_PROJECT_NAME:-iot-flood-monitoring}
+
+services:
+  mqtt:
+    image: eclipse-mosquitto:2.0.22
+    restart: unless-stopped
+    ports:
+      - name: mqtt
+        target: 1883
+        published: "${MQTT_HOST_PORT:-1883}"
+        host_ip: "${MQTT_BIND_ADDRESS:-0.0.0.0}"
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: ./infrastructure/mosquitto/config/mosquitto.conf
+        target: /mosquitto/config/mosquitto.conf
+        read_only: true
+      - type: volume
+        source: mqtt_data
+        target: /mosquitto/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          mosquitto_sub -h 127.0.0.1 -p 1883
+          -t '$$SYS/broker/version' -C 1 -W 5 >/dev/null 2>&1 || exit 1
+      interval: 10s
+      timeout: 6s
+      retries: 5
+      start_period: 5s
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-flood_monitoring}"
+      POSTGRES_USER: "${POSTGRES_USER:-flood_app}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-change-me-for-local-development}"
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - type: volume
+        source: postgres_data
+        target: /var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      mqtt:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql+psycopg://${POSTGRES_USER:-flood_app}:${POSTGRES_PASSWORD:-change-me-for-local-development}@db:5432/${POSTGRES_DB:-flood_monitoring}"
+      MQTT_HOST: mqtt
+      MQTT_PORT: 1883
+      MQTT_CLIENT_ID: flood-monitoring-backend
+    ports:
+      - "127.0.0.1:${BACKEND_HOST_PORT:-8000}:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import json, urllib.request;
+          data=json.load(urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3));
+          assert data['database']=='up'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  simulator:
+    profiles: ["simulator"]
+    build:
+      context: ./simulator
+    depends_on:
+      mqtt:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    environment:
+      MQTT_HOST: mqtt
+      MQTT_PORT: 1883
+      DEVICE_ID: "${SIMULATOR_DEVICE_ID:-node-001}"
+      SIMULATOR_SCENARIO: "${SIMULATOR_SCENARIO:-normal}"
+      PUBLISH_INTERVAL_SECONDS: "${PUBLISH_INTERVAL_SECONDS:-5}"
+      SIMULATOR_MESSAGE_COUNT: "${SIMULATOR_MESSAGE_COUNT:-0}"
+      SIMULATOR_SEED: "${SIMULATOR_SEED:-2026}"
+    restart: "no"
+
+volumes:
+  mqtt_data:
+  postgres_data:
+

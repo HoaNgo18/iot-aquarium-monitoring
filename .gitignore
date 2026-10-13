@@ -1,0 +1,32 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+
+# Node.js and Vue
+node_modules/
+dist/
+coverage/
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local data and logs
+*.log
+data/
+
