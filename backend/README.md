@@ -17,7 +17,17 @@ Cảnh báo hiện có: mực nước vượt ngưỡng, mực nước tăng nha
 
 WebSocket gửi sự kiện `telemetry`, `status` và `alerts` sau khi bản tin MQTT đã được kiểm tra và lưu thành công. Sự kiện `alerts` chứa snapshot các cảnh báo đang mở của thiết bị, giúp frontend đồng bộ lại trạng thái mà không phải tự ghép các thay đổi.
 
-Smoke-test client nằm tại `tests/websocket_probe.py`; script chờ telemetry và cảnh báo mực nước của `node-websocket-smoke` trong tối đa 20 giây.
+Smoke-test client nằm tại `scripts/websocket_probe.py`; script chờ telemetry và cảnh báo mực nước trong tối đa 20 giây. Toàn bộ pipeline được kiểm tra từ thư mục gốc bằng `python scripts/smoke_test.py`.
+
+## Cấu trúc mã nguồn
+
+- `app/api/`: REST và WebSocket route.
+- `app/domain/`: quy tắc cảnh báo thuần, không truy cập database.
+- `app/repositories/`: truy vấn và ghi dữ liệu SQLAlchemy.
+- `app/services/`: điều phối quy tắc nghiệp vụ với persistence.
+- `app/ingest.py`: điều phối xử lý một bản tin MQTT.
+- `app/main.py`: application factory và vòng đời các background service.
+- `tests/`: test tự động; `scripts/`: công cụ kiểm tra thủ công.
 
 ## Chạy bằng Docker Compose
 
