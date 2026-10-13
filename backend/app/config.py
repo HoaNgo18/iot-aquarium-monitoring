@@ -1,0 +1,22 @@
+from functools import lru_cache
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    app_name: str = "IoT Flood Monitoring API"
+    app_version: str = "0.1.0"
+    database_url: str = Field(
+        default="postgresql+psycopg://flood_app:change-me-for-local-development@localhost:5432/flood_monitoring"
+    )
+    mqtt_host: str = "localhost"
+    mqtt_port: int = 1884
+    mqtt_client_id: str = "flood-monitoring-backend"
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
