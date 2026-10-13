@@ -8,7 +8,11 @@ FastAPI nhận telemetry/status từ Mosquitto, kiểm tra schema v1, lưu Postg
 - `GET /api/v1/devices/{device_id}`
 - `GET /api/v1/devices/{device_id}/telemetry/latest`
 - `GET /api/v1/devices/{device_id}/telemetry?from=...&to=...&limit=100`
+- `GET /api/v1/devices/{device_id}/alerts?active_only=true`
+- `GET/PUT /api/v1/devices/{device_id}/thresholds`
 - Swagger UI: `GET /docs`
+
+Cảnh báo hiện có: mực nước vượt ngưỡng, mực nước tăng nhanh, mưa lớn, lỗi cảm biến và thiết bị offline. Một cảnh báo đang mở sẽ được cập nhật thay vì tạo lặp; khi điều kiện trở lại bình thường, backend điền `ended_at`.
 
 ## Chạy bằng Docker Compose
 

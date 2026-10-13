@@ -58,6 +58,39 @@ class DeviceResponse(BaseModel):
     updated_at: datetime
 
 
+class AlertResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    device_id: str
+    alert_type: str
+    severity: str
+    message: str
+    started_at: datetime
+    ended_at: datetime | None
+    acknowledged_at: datetime | None
+
+
+class ThresholdUpdate(BaseModel):
+    water_warning_cm: Annotated[float, Field(ge=0, le=1000)] = 50.0
+    water_critical_cm: Annotated[float, Field(gt=0, le=1000)] = 70.0
+    rise_rate_cm_per_min: Annotated[float, Field(gt=0, le=1000)] = 10.0
+    rainfall_warning_mm: Annotated[float, Field(ge=0, le=1000)] = 20.0
+
+    @model_validator(mode="after")
+    def validate_water_thresholds(self) -> "ThresholdUpdate":
+        if self.water_critical_cm <= self.water_warning_cm:
+            raise ValueError("water_critical_cm phải lớn hơn water_warning_cm")
+        return self
+
+
+class ThresholdResponse(ThresholdUpdate):
+    model_config = ConfigDict(from_attributes=True)
+
+    device_id: str
+    updated_at: datetime
+
+
 class HealthResponse(BaseModel):
     status: Literal["healthy", "degraded"]
     database: Literal["up", "down"]

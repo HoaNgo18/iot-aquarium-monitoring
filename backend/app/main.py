@@ -10,9 +10,17 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.database import get_db
-from app.models import Device, Telemetry
+from app.alerts import get_or_create_threshold
+from app.models import Alert, Device, Telemetry, Threshold
 from app.mqtt_consumer import MqttConsumer
-from app.schemas import DeviceResponse, HealthResponse, TelemetryResponse
+from app.schemas import (
+    AlertResponse,
+    DeviceResponse,
+    HealthResponse,
+    TelemetryResponse,
+    ThresholdResponse,
+    ThresholdUpdate,
+)
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -93,6 +101,55 @@ def create_app(start_background_services: bool = True) -> FastAPI:
             statement = statement.where(Telemetry.measured_at <= to_time)
         statement = statement.order_by(Telemetry.measured_at.desc()).limit(limit)
         return list(db.scalars(statement))
+
+    @app.get(
+        "/api/v1/devices/{device_id}/alerts",
+        response_model=list[AlertResponse],
+        tags=["alerts"],
+    )
+    def alert_history(
+        device_id: str,
+        active_only: bool = False,
+        limit: Annotated[int, Query(ge=1, le=1000)] = 100,
+        db: Session = Depends(get_db),
+    ) -> list[Alert]:
+        statement = select(Alert).where(Alert.device_id == device_id)
+        if active_only:
+            statement = statement.where(Alert.ended_at.is_(None))
+        statement = statement.order_by(Alert.started_at.desc(), Alert.id.desc()).limit(limit)
+        return list(db.scalars(statement))
+
+    @app.get(
+        "/api/v1/devices/{device_id}/thresholds",
+        response_model=ThresholdResponse,
+        tags=["alerts"],
+    )
+    def get_thresholds(device_id: str, db: Session = Depends(get_db)) -> Threshold:
+        if db.get(Device, device_id) is None:
+            raise HTTPException(status_code=404, detail="Không tìm thấy thiết bị")
+        threshold = get_or_create_threshold(db, device_id)
+        db.commit()
+        db.refresh(threshold)
+        return threshold
+
+    @app.put(
+        "/api/v1/devices/{device_id}/thresholds",
+        response_model=ThresholdResponse,
+        tags=["alerts"],
+    )
+    def update_thresholds(
+        device_id: str,
+        update: ThresholdUpdate,
+        db: Session = Depends(get_db),
+    ) -> Threshold:
+        if db.get(Device, device_id) is None:
+            raise HTTPException(status_code=404, detail="Không tìm thấy thiết bị")
+        threshold = get_or_create_threshold(db, device_id)
+        for field, value in update.model_dump().items():
+            setattr(threshold, field, value)
+        db.commit()
+        db.refresh(threshold)
+        return threshold
 
     return app
 

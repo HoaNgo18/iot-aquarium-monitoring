@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.alerts import evaluate_status, evaluate_telemetry
 from app.models import Device, Telemetry
 from app.schemas import StatusPayload, TelemetryPayload
 
@@ -56,6 +57,7 @@ def ingest_message(
 
         if isinstance(payload, StatusPayload):
             device.connectivity = payload.connectivity
+            evaluate_status(session, payload)
             session.commit()
             return IngestResult.STORED
 
@@ -68,6 +70,16 @@ def ingest_message(
         )
         if duplicate is not None:
             return IngestResult.DUPLICATE
+
+        previous = session.scalar(
+            select(Telemetry)
+            .where(
+                Telemetry.device_id == payload.device_id,
+                Telemetry.measured_at < payload.timestamp,
+            )
+            .order_by(Telemetry.measured_at.desc())
+            .limit(1)
+        )
 
         device.connectivity = "online"
         device.sensor_status = payload.sensor_status
@@ -82,6 +94,7 @@ def ingest_message(
                 sensor_status=payload.sensor_status,
             )
         )
+        evaluate_telemetry(session, payload, previous)
         session.commit()
         return IngestResult.STORED
 
