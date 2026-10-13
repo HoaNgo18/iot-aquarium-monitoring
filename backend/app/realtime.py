@@ -10,8 +10,8 @@ from fastapi import WebSocket
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.ingest import TOPIC_PATTERN
 from app.models import Alert
+from app.topics import TOPIC_PATTERN
 
 
 logger = logging.getLogger(__name__)
