@@ -29,4 +29,6 @@ Thumbs.db
 # Local data and logs
 *.log
 data/
+.playwright-cli/
+output/playwright/
 
