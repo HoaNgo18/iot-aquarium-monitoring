@@ -22,8 +22,7 @@ async def main() -> None:
             print(json.dumps(event, ensure_ascii=False), flush=True)
             telemetry_received |= event.get("type") == "telemetry"
             alert_received |= event.get("type") == "alerts" and any(
-                alert.get("alert_type") == "water_level" for alert in event.get("data", [])
-            )
+                alert.get("alert_type") == "water_level" for alert in event.get("data", []))
             if telemetry_received and alert_received:
                 print("PASS: WebSocket nhận telemetry và water_level alert.", flush=True)
                 return
