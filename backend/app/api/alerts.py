@@ -1,6 +1,8 @@
 from typing import Annotated
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import update as sql_update
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -11,6 +13,20 @@ from app.schemas import AlertResponse, ThresholdResponse, ThresholdUpdate
 
 
 router = APIRouter(prefix="/api/v1/devices", tags=["alerts"])
+
+
+@router.post("/{device_id}/alerts/{alert_id}/acknowledge", response_model=AlertResponse)
+def acknowledge_alert(device_id: str, alert_id: int, db: Session = Depends(get_db)) -> Alert:
+    alert = db.get(Alert, alert_id)
+    if alert is None or alert.device_id != device_id:
+        raise HTTPException(status_code=404, detail="Không tìm thấy cảnh báo của thiết bị")
+    # Acknowledgement records operator awareness; it does not resolve the condition.
+    if alert.acknowledged_at is None:
+        db.execute(sql_update(Alert).where(Alert.id == alert_id, Alert.device_id == device_id,
+            Alert.acknowledged_at.is_(None)).values(acknowledged_at=datetime.now(timezone.utc)))
+        db.commit()
+        db.refresh(alert)
+    return alert
 
 
 @router.get("/{device_id}/alerts", response_model=list[AlertResponse])

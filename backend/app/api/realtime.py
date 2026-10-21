@@ -10,6 +10,8 @@ async def websocket_endpoint(websocket: WebSocket, device_id: str | None = None)
     await hub.connect(websocket, device_id)
     try:
         while True:
-            await websocket.receive_text()
+            message = await websocket.receive_text()
+            if message == 'ping':
+                await websocket.send_json({'type': 'pong'})
     except WebSocketDisconnect:
         hub.disconnect(websocket)

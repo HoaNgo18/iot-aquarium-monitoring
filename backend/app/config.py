@@ -5,14 +5,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "IoT Flood Monitoring API"
-    app_version: str = "0.1.0"
+    app_name: str = "Aquarium Monitoring API"
+    app_version: str = "0.2.0"
     database_url: str = Field(
         default="postgresql+psycopg://flood_app:change-me-for-local-development@localhost:5432/flood_monitoring"
     )
     mqtt_host: str = "localhost"
     mqtt_port: int = 1884
-    mqtt_client_id: str = "flood-monitoring-backend"
+    mqtt_client_id: str = "aquarium-monitoring-backend"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

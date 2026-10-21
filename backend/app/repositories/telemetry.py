@@ -17,25 +17,14 @@ def is_duplicate(session: Session, payload: TelemetryPayload) -> bool:
     ) is not None
 
 
-def get_previous(session: Session, payload: TelemetryPayload) -> Telemetry | None:
-    return session.scalar(
-        select(Telemetry)
-        .where(
-            Telemetry.device_id == payload.device_id,
-            Telemetry.measured_at < payload.timestamp,
-        )
-        .order_by(Telemetry.measured_at.desc())
-        .limit(1)
-    )
-
-
 def add_telemetry(session: Session, payload: TelemetryPayload) -> Telemetry:
     row = Telemetry(
         device_id=payload.device_id,
         sequence=payload.sequence,
         measured_at=payload.timestamp,
-        water_level_cm=payload.water_level_cm,
-        rainfall_mm=payload.rainfall_mm,
+        temperature_c=payload.temperature_c,
+        ph=payload.ph,
+        turbidity_pct=payload.turbidity_pct,
         signal_strength_dbm=payload.signal_strength_dbm,
         sensor_status=payload.sensor_status,
     )

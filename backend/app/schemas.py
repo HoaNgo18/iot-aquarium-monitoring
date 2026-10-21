@@ -1,39 +1,54 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated, Literal
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 DeviceId = Annotated[str, Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")]
 
 
 class TelemetryPayload(BaseModel):
-    schema_version: Literal[1]
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+
+    schema_version: Literal[2]
     device_id: DeviceId
     timestamp: AwareDatetime
     sequence: Annotated[int, Field(ge=1)]
-    water_level_cm: Annotated[float | None, Field(ge=0, le=1000)]
-    rainfall_mm: Annotated[float, Field(ge=0, le=1000)]
+    temperature_c: Annotated[float | None, Field(ge=-55, le=125)]
+    ph: Annotated[float | None, Field(ge=0, le=14)]
+    turbidity_pct: Annotated[float | None, Field(ge=0, le=100)]
     signal_strength_dbm: Annotated[int, Field(ge=-127, le=0)]
     sensor_status: Literal["normal", "error"]
 
     @model_validator(mode="after")
-    def validate_sensor_value(self) -> "TelemetryPayload":
-        if self.sensor_status == "normal" and self.water_level_cm is None:
-            raise ValueError("water_level_cm là bắt buộc khi sensor_status=normal")
-        if self.sensor_status == "error" and self.water_level_cm is not None:
-            raise ValueError("water_level_cm phải là null khi sensor_status=error")
+    def validate_sensor_values(self) -> "TelemetryPayload":
+        missing = any(value is None for value in (self.temperature_c, self.ph, self.turbidity_pct))
+        if (self.sensor_status == "error") != missing:
+            raise ValueError("sensor_status=error khi và chỉ khi ít nhất một số đo là null")
         return self
 
 
 class StatusPayload(BaseModel):
-    schema_version: Literal[1]
+    model_config = ConfigDict(extra="forbid")
+
+    schema_version: Literal[2]
     device_id: DeviceId
     timestamp: AwareDatetime
     connectivity: Literal["online", "offline"]
 
 
-class TelemetryResponse(BaseModel):
+class UTCResponse(BaseModel):
+    """SQLite tests may return naive datetimes; persisted timestamps are always UTC."""
+
+    @field_validator("*", mode="after")
+    @classmethod
+    def normalize_timestamps(cls, value):
+        if isinstance(value, datetime):
+            return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+        return value
+
+
+class TelemetryResponse(UTCResponse):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -41,13 +56,14 @@ class TelemetryResponse(BaseModel):
     sequence: int
     measured_at: datetime
     received_at: datetime
-    water_level_cm: float | None
-    rainfall_mm: float
+    temperature_c: float | None
+    ph: float | None
+    turbidity_pct: float | None
     signal_strength_dbm: int
     sensor_status: str
 
 
-class DeviceResponse(BaseModel):
+class DeviceResponse(UTCResponse):
     model_config = ConfigDict(from_attributes=True)
 
     id: str
@@ -58,7 +74,7 @@ class DeviceResponse(BaseModel):
     updated_at: datetime
 
 
-class AlertResponse(BaseModel):
+class AlertResponse(UTCResponse):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -72,19 +88,28 @@ class AlertResponse(BaseModel):
 
 
 class ThresholdUpdate(BaseModel):
-    water_warning_cm: Annotated[float, Field(ge=0, le=1000)] = 50.0
-    water_critical_cm: Annotated[float, Field(gt=0, le=1000)] = 70.0
-    rise_rate_cm_per_min: Annotated[float, Field(gt=0, le=1000)] = 10.0
-    rainfall_warning_mm: Annotated[float, Field(ge=0, le=1000)] = 20.0
+    # Development defaults only; configure for the selected species and calibrated probes.
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+
+    temperature_min_c: Annotated[float, Field(ge=-55, le=125)] = 22.0
+    temperature_max_c: Annotated[float, Field(ge=-55, le=125)] = 30.0
+    ph_min: Annotated[float, Field(ge=0, le=14)] = 6.5
+    ph_max: Annotated[float, Field(ge=0, le=14)] = 8.5
+    turbidity_warning_pct: Annotated[float, Field(ge=0, le=100)] = 60.0
+    turbidity_critical_pct: Annotated[float, Field(ge=0, le=100)] = 80.0
 
     @model_validator(mode="after")
-    def validate_water_thresholds(self) -> "ThresholdUpdate":
-        if self.water_critical_cm <= self.water_warning_cm:
-            raise ValueError("water_critical_cm phải lớn hơn water_warning_cm")
+    def validate_thresholds(self) -> "ThresholdUpdate":
+        if self.temperature_min_c >= self.temperature_max_c:
+            raise ValueError("temperature_min_c phải nhỏ hơn temperature_max_c")
+        if self.ph_min >= self.ph_max:
+            raise ValueError("ph_min phải nhỏ hơn ph_max")
+        if self.turbidity_warning_pct >= self.turbidity_critical_pct:
+            raise ValueError("turbidity_warning_pct phải nhỏ hơn turbidity_critical_pct")
         return self
 
 
-class ThresholdResponse(ThresholdUpdate):
+class ThresholdResponse(ThresholdUpdate, UTCResponse):
     model_config = ConfigDict(from_attributes=True)
 
     device_id: str

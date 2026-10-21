@@ -2,12 +2,16 @@ import asyncio
 from datetime import datetime, timezone
 import json
 import unittest
+from types import SimpleNamespace
+
+from fastapi import WebSocketDisconnect
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base
+from app.api.realtime import websocket_endpoint
 from app.models import Alert, Device
 from app.realtime import RealtimeHub, build_realtime_events
 
@@ -25,6 +29,27 @@ class FakeWebSocket:
 
 
 class RealtimeHubTests(unittest.IsolatedAsyncioTestCase):
+    async def test_endpoint_answers_heartbeat_and_cleans_up_connection(self) -> None:
+        hub = RealtimeHub()
+
+        class HeartbeatSocket(FakeWebSocket):
+            def __init__(self) -> None:
+                super().__init__()
+                self.app = SimpleNamespace(state=SimpleNamespace(realtime_hub=hub))
+                self.received_ping = False
+
+            async def receive_text(self) -> str:
+                if self.received_ping:
+                    raise WebSocketDisconnect(code=1000)
+                self.received_ping = True
+                return 'ping'
+
+        websocket = HeartbeatSocket()
+        await websocket_endpoint(websocket, 'node-001')  # type: ignore[arg-type]
+        self.assertEqual(websocket.events[-1], {'type': 'pong'})
+        await hub.broadcast({'type': 'status', 'device_id': 'node-001', 'data': {}})
+        self.assertEqual(len(websocket.events), 2)
+
     async def test_broadcast_respects_device_filter(self) -> None:
         hub = RealtimeHub()
         all_devices = FakeWebSocket()
@@ -84,13 +109,13 @@ class RealtimeEventTests(unittest.TestCase):
             session.commit()
 
         payload = {
-            "schema_version": 1,
+            "schema_version": 2,
             "device_id": "node-001",
             "timestamp": now.isoformat(),
             "connectivity": "offline",
         }
         events = build_realtime_events(
-            "flood-monitoring/devices/node-001/status",
+            "aquarium-monitoring/devices/node-001/status",
             json.dumps(payload).encode(),
             self.sessions,
         )

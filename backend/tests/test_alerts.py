@@ -12,97 +12,78 @@ from app.models import Alert
 
 
 class AlertRuleTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.engine = create_engine(
-            "sqlite://",
-            connect_args={"check_same_thread": False},
-            poolclass=StaticPool,
-        )
+    def setUp(self):
+        self.engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
         Base.metadata.create_all(self.engine)
         self.sessions = sessionmaker(bind=self.engine, expire_on_commit=False)
-        self.device_id = "node-alert-test"
-        self.base_time = datetime(2026, 10, 13, 1, 0, tzinfo=timezone.utc)
+        self.device_id = "tank-alert-test"
+        self.base_time = datetime(2026, 10, 19, 1, 0, tzinfo=timezone.utc)
 
-    def tearDown(self) -> None:
+    def tearDown(self):
         self.engine.dispose()
 
-    def send_telemetry(
-        self,
-        sequence: int,
-        seconds: int,
-        water: float | None,
-        rain: float = 0.0,
-        sensor_status: str = "normal",
-    ) -> None:
+    def send_telemetry(self, sequence, seconds, **changes):
         payload = {
-            "schema_version": 1,
-            "device_id": self.device_id,
+            "schema_version": 2, "device_id": self.device_id,
             "timestamp": (self.base_time + timedelta(seconds=seconds)).isoformat(),
-            "sequence": sequence,
-            "water_level_cm": water,
-            "rainfall_mm": rain,
-            "signal_strength_dbm": -55,
-            "sensor_status": sensor_status,
+            "sequence": sequence, "temperature_c": 27.0, "ph": 7.0, "turbidity_pct": 20.0,
+            "signal_strength_dbm": -55, "sensor_status": "normal",
         }
-        ingest_message(
-            f"flood-monitoring/devices/{self.device_id}/telemetry",
-            json.dumps(payload).encode(),
-            self.sessions,
-        )
+        payload.update(changes)
+        ingest_message(f"aquarium-monitoring/devices/{self.device_id}/telemetry",
+                       json.dumps(payload).encode(), self.sessions)
 
-    def send_status(self, connectivity: str, seconds: int) -> None:
+    def send_status(self, connectivity, seconds):
         payload = {
-            "schema_version": 1,
-            "device_id": self.device_id,
+            "schema_version": 2, "device_id": self.device_id,
             "timestamp": (self.base_time + timedelta(seconds=seconds)).isoformat(),
             "connectivity": connectivity,
         }
-        ingest_message(
-            f"flood-monitoring/devices/{self.device_id}/status",
-            json.dumps(payload).encode(),
-            self.sessions,
-        )
+        ingest_message(f"aquarium-monitoring/devices/{self.device_id}/status",
+                       json.dumps(payload).encode(), self.sessions)
 
-    def active_alert(self, alert_type: str) -> Alert | None:
+    def active_alert(self, alert_type):
         with self.sessions() as session:
-            return session.scalar(
-                select(Alert).where(
-                    Alert.alert_type == alert_type,
-                    Alert.ended_at.is_(None),
-                )
-            )
+            return session.scalar(select(Alert).where(
+                Alert.alert_type == alert_type, Alert.ended_at.is_(None)))
 
-    def test_flood_opens_water_and_rain_alerts(self) -> None:
-        self.send_telemetry(1, 0, water=75.0, rain=25.0)
+    def test_opens_parameter_alerts(self):
+        self.send_telemetry(1, 0, temperature_c=34, ph=5, turbidity_pct=90)
+        for kind in ("temperature", "ph", "turbidity"):
+            self.assertIsNotNone(self.active_alert(kind))
+        self.assertEqual(self.active_alert("turbidity").severity, "critical")
 
-        self.assertEqual(self.active_alert("water_level").severity, "critical")
-        self.assertIsNotNone(self.active_alert("heavy_rain"))
+    def test_normal_sample_closes_parameter_alerts(self):
+        self.send_telemetry(1, 0, temperature_c=34, ph=5, turbidity_pct=90)
+        self.send_telemetry(2, 60)
+        for kind in ("temperature", "ph", "turbidity"):
+            self.assertIsNone(self.active_alert(kind))
 
-    def test_normal_sample_closes_water_and_rain_alerts(self) -> None:
-        self.send_telemetry(1, 0, water=75.0, rain=25.0)
-        self.send_telemetry(2, 60, water=20.0, rain=0.0)
-
-        self.assertIsNone(self.active_alert("water_level"))
-        self.assertIsNone(self.active_alert("heavy_rain"))
-
-    def test_sensor_error_opens_and_normal_sample_closes_alert(self) -> None:
-        self.send_telemetry(1, 0, water=None, sensor_status="error")
+    def test_failed_probe_preserves_existing_alert_until_recovery(self):
+        self.send_telemetry(1, 0, ph=5)
+        self.send_telemetry(2, 60, ph=None, sensor_status="error")
+        self.assertIsNotNone(self.active_alert("ph"))
         self.assertIsNotNone(self.active_alert("sensor_error"))
-
-        self.send_telemetry(2, 60, water=20.0)
+        self.send_telemetry(3, 120)
+        self.assertIsNone(self.active_alert("ph"))
         self.assertIsNone(self.active_alert("sensor_error"))
 
-    def test_rapid_rise_opens_alert(self) -> None:
-        self.send_telemetry(1, 0, water=10.0)
-        self.send_telemetry(2, 60, water=25.0)
+    def test_prolonged_violation_does_not_duplicate_open_alert(self):
+        self.send_telemetry(1, 0, turbidity_pct=65)
+        initial = self.active_alert("turbidity")
+        self.send_telemetry(2, 3600, turbidity_pct=90)
+        self.assertEqual(self.active_alert("turbidity").id, initial.id)
+        self.assertEqual(self.active_alert("turbidity").severity, "critical")
+        with self.sessions() as session:
+            self.assertEqual(len(list(session.scalars(select(Alert).where(Alert.alert_type == "turbidity")))), 1)
 
-        self.assertEqual(self.active_alert("rapid_rise").severity, "warning")
-
-    def test_offline_opens_and_online_closes_alert(self) -> None:
+    def test_offline_is_closed_by_status_or_real_telemetry(self):
         self.send_status("offline", 0)
         self.assertIsNotNone(self.active_alert("offline"))
-
         self.send_status("online", 60)
+        self.assertIsNone(self.active_alert("offline"))
+        self.send_status("offline", 120)
+        self.send_telemetry(1, 180)
         self.assertIsNone(self.active_alert("offline"))
 
 

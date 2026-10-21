@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime, timezone
 from enum import StrEnum
 from typing import Callable
 
@@ -7,7 +8,7 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.repositories.devices import get_or_create_device
-from app.repositories.telemetry import add_telemetry, get_previous, is_duplicate
+from app.repositories.telemetry import add_telemetry, is_duplicate
 from app.schemas import StatusPayload, TelemetryPayload
 from app.services.alert_service import evaluate_status_alerts, evaluate_telemetry_alerts
 from app.topics import TOPIC_PATTERN
@@ -46,22 +47,30 @@ def ingest_message(
 
     with session_factory() as session:
         device = get_or_create_device(session, payload.device_id)
-        device.last_seen_at = payload.timestamp
+        observed_at = datetime.now(timezone.utc)
 
         if isinstance(payload, StatusPayload):
             device.connectivity = payload.connectivity
-            evaluate_status_alerts(session, payload)
+            # The broker's Last Will carries a timestamp from CONNECT, potentially
+            # hours old. Offline is observed now and is not a fresh device sighting.
+            if payload.connectivity == "online":
+                last_seen = device.last_seen_at
+                if last_seen is None or payload.timestamp > last_seen.replace(tzinfo=timezone.utc):
+                    device.last_seen_at = payload.timestamp
+            evaluate_status_alerts(session, payload, observed_at=observed_at)
             session.commit()
             return IngestResult.STORED
 
         if is_duplicate(session, payload):
             return IngestResult.DUPLICATE
 
-        previous = get_previous(session, payload)
         device.connectivity = "online"
+        last_seen = device.last_seen_at
+        if last_seen is None or payload.timestamp > last_seen.replace(tzinfo=timezone.utc):
+            device.last_seen_at = payload.timestamp
         device.sensor_status = payload.sensor_status
         add_telemetry(session, payload)
-        evaluate_telemetry_alerts(session, payload, previous)
+        evaluate_telemetry_alerts(session, payload, observed_at=observed_at)
         session.commit()
         return IngestResult.STORED
 

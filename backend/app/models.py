@@ -29,15 +29,16 @@ class Device(Base):
 
 
 class Telemetry(Base):
-    __tablename__ = "telemetry"
+    __tablename__ = "aquarium_telemetry"
     __table_args__ = (
         UniqueConstraint(
-            "device_id", "sequence", "measured_at", name="uq_telemetry_device_sample"
+            "device_id", "sequence", "measured_at", name="uq_aquarium_telemetry_sample"
         ),
-        Index("ix_telemetry_device_measured", "device_id", "measured_at"),
+        Index("ix_aquarium_telemetry_device_measured", "device_id", "measured_at"),
         CheckConstraint("sensor_status IN ('normal', 'error')", name="ck_telemetry_sensor_status"),
-        CheckConstraint("water_level_cm IS NULL OR water_level_cm >= 0", name="ck_water_level_nonnegative"),
-        CheckConstraint("rainfall_mm >= 0", name="ck_rainfall_nonnegative"),
+        CheckConstraint("temperature_c IS NULL OR temperature_c BETWEEN -55 AND 125", name="ck_aquarium_temperature"),
+        CheckConstraint("ph IS NULL OR ph BETWEEN 0 AND 14", name="ck_aquarium_ph"),
+        CheckConstraint("turbidity_pct IS NULL OR turbidity_pct BETWEEN 0 AND 100", name="ck_aquarium_turbidity"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -47,8 +48,9 @@ class Telemetry(Base):
     received_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
-    water_level_cm: Mapped[float | None] = mapped_column(Float)
-    rainfall_mm: Mapped[float] = mapped_column(Float, nullable=False)
+    temperature_c: Mapped[float | None] = mapped_column(Float)
+    ph: Mapped[float | None] = mapped_column(Float)
+    turbidity_pct: Mapped[float | None] = mapped_column(Float)
     signal_strength_dbm: Mapped[int] = mapped_column(Integer, nullable=False)
     sensor_status: Mapped[str] = mapped_column(String(16), nullable=False)
 
@@ -56,17 +58,20 @@ class Telemetry(Base):
 
 
 class Threshold(Base):
-    __tablename__ = "thresholds"
+    __tablename__ = "aquarium_thresholds"
     __table_args__ = (
-        CheckConstraint("water_warning_cm >= 0", name="ck_threshold_warning_nonnegative"),
-        CheckConstraint("water_critical_cm > water_warning_cm", name="ck_threshold_critical_gt_warning"),
+        CheckConstraint("-55 <= temperature_min_c AND temperature_min_c < temperature_max_c AND temperature_max_c <= 125", name="ck_aquarium_temp_range"),
+        CheckConstraint("0 <= ph_min AND ph_min < ph_max AND ph_max <= 14", name="ck_aquarium_ph_range"),
+        CheckConstraint("0 <= turbidity_warning_pct AND turbidity_warning_pct < turbidity_critical_pct AND turbidity_critical_pct <= 100", name="ck_aquarium_turbidity_range"),
     )
 
     device_id: Mapped[str] = mapped_column(ForeignKey("devices.id"), primary_key=True)
-    water_warning_cm: Mapped[float] = mapped_column(Float, default=50.0, nullable=False)
-    water_critical_cm: Mapped[float] = mapped_column(Float, default=70.0, nullable=False)
-    rise_rate_cm_per_min: Mapped[float] = mapped_column(Float, default=10.0, nullable=False)
-    rainfall_warning_mm: Mapped[float] = mapped_column(Float, default=20.0, nullable=False)
+    temperature_min_c: Mapped[float] = mapped_column(Float, default=22.0, nullable=False)
+    temperature_max_c: Mapped[float] = mapped_column(Float, default=30.0, nullable=False)
+    ph_min: Mapped[float] = mapped_column(Float, default=6.5, nullable=False)
+    ph_max: Mapped[float] = mapped_column(Float, default=8.5, nullable=False)
+    turbidity_warning_pct: Mapped[float] = mapped_column(Float, default=60.0, nullable=False)
+    turbidity_critical_pct: Mapped[float] = mapped_column(Float, default=80.0, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
@@ -75,10 +80,10 @@ class Threshold(Base):
 
 
 class Alert(Base):
-    __tablename__ = "alerts"
+    __tablename__ = "aquarium_alerts"
     __table_args__ = (
         CheckConstraint("severity IN ('warning', 'critical')", name="ck_alerts_severity"),
-        Index("ix_alerts_device_started", "device_id", "started_at"),
+        Index("ix_aquarium_alerts_device_started", "device_id", "started_at"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

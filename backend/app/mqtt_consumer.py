@@ -45,8 +45,8 @@ class MqttConsumer:
 
     def _on_connect(self, client, _userdata, _flags, reason_code, _properties) -> None:
         if reason_code == 0:
-            client.subscribe("flood-monitoring/devices/+/telemetry", qos=1)
-            client.subscribe("flood-monitoring/devices/+/status", qos=1)
+            client.subscribe("aquarium-monitoring/devices/+/telemetry", qos=1)
+            client.subscribe("aquarium-monitoring/devices/+/status", qos=1)
             self.connected.set()
             logger.info("MQTT đã kết nối và subscribe telemetry/status")
         else:

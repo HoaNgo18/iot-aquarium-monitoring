@@ -1,1 +1,1 @@
-"""Backend package for the flood monitoring system."""
+"""Backend package for the aquarium monitoring system."""
