@@ -3,15 +3,36 @@ import { computed, ref } from 'vue'
 import AlertList from '../components/AlertList.vue'
 import DeviceStatus from '../components/DeviceStatus.vue'
 import MetricCard from '../components/MetricCard.vue'
-import WaterLevelChart from '../components/WaterLevelChart.vue'
+import WaterQualityHistory from '../components/WaterQualityHistory.vue'
+import ThresholdSettings from '../components/ThresholdSettings.vue'
+import { useSampleAge } from '../composables/useSampleAge'
 import { useReadings } from '../composables/useReadings'
+import { useAlerts } from '../composables/useAlerts'
+import { useRealtime } from '../composables/useRealtime'
 import type { MetricSummary } from '../types/monitoring'
 
 const deviceIdPattern = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/
 const queryDeviceId = new URLSearchParams(window.location.search).get('device_id')
-const deviceId = ref(queryDeviceId && deviceIdPattern.test(queryDeviceId) ? queryDeviceId : 'node-001')
+const deviceId = ref(queryDeviceId && deviceIdPattern.test(queryDeviceId) ? queryDeviceId : 'tank-001')
 const deviceInput = ref(deviceId.value)
-const { device, latest, state, errorMessage, refresh } = useReadings(deviceId)
+const { device, latest, state, errorMessage, refresh: refreshReadings } = useReadings(deviceId)
+const freshness = useSampleAge(latest)
+const activeOnly = ref(true)
+const { alerts, state: alertState, errorMessage: alertError, refresh: refreshAlerts } = useAlerts(deviceId, activeOnly)
+const history = ref<InstanceType<typeof WaterQualityHistory> | null>(null)
+const { state: realtimeState } = useRealtime(deviceId, async () => {
+  await Promise.all([refreshReadings(true), refreshAlerts(true), history.value?.refresh(true)])
+})
+
+async function refresh() {
+  await Promise.all([refreshReadings(), refreshAlerts(), history.value?.refresh()])
+}
+function refreshAcknowledgement(target: string) {
+  if (target === deviceId.value) void refreshAlerts(true)
+}
+function thresholdsSaved(target: string) {
+  if (target === deviceId.value) void history.value?.refresh(true)
+}
 const numberFormatter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 })
 const timeFormatter = new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'short',
@@ -19,12 +40,6 @@ const timeFormatter = new Intl.DateTimeFormat('vi-VN', {
   timeZone: 'Asia/Ho_Chi_Minh',
 })
 const measuredAt = computed(() => latest.value ? timeFormatter.format(new Date(latest.value.measured_at)) : '')
-const stateLabel = computed(() => ({
-  loading: 'Đang tải dữ liệu',
-  ready: 'Đã tải dữ liệu',
-  empty: 'Chưa có số đo',
-  error: 'Không tải được dữ liệu',
-})[state.value])
 
 function selectDevice() {
   const value = deviceInput.value.trim()
@@ -40,31 +55,28 @@ function selectDevice() {
 }
 
 const metrics = computed<MetricSummary[]>(() => [
-  {
-    title: 'Mực nước',
-    value: state.value === 'loading' ? 'Đang tải…' : latest.value?.water_level_cm != null
-      ? `${numberFormatter.format(latest.value.water_level_cm)} cm`
-      : '-- cm',
-    description: latest.value?.sensor_status === 'error'
-      ? 'Cảm biến lỗi · Mẫu này không có giá trị mực nước hợp lệ'
-      : latest.value ? 'Số đo gần nhất từ thiết bị' : 'Chưa có số đo mực nước',
-    accent: 'blue',
-  },
-  {
-    title: 'Lượng mưa',
-    value: state.value === 'loading' ? 'Đang tải…' : latest.value
-      ? `${numberFormatter.format(latest.value.rainfall_mm)} mm`
-      : '-- mm',
-    description: 'Lượng mưa trong chu kỳ gần nhất',
-    accent: 'cyan',
-  },
-])
+  { title: 'Nhiệt độ nước', field: 'temperature_c' as const, unit: '°C', accent: 'blue' as const },
+  { title: 'pH', field: 'ph' as const, unit: '', accent: 'cyan' as const },
+  { title: 'Độ đục tương đối', field: 'turbidity_pct' as const, unit: '%', accent: 'slate' as const },
+].map(({ title, field, unit, accent }) => {
+  const value = latest.value?.[field]
+  return {
+    title,
+    value: state.value === 'loading' ? 'Đang tải…' : value != null
+      ? numberFormatter.format(value) : '--',
+    unit,
+    description: latest.value && value == null ? 'Cảm biến lỗi · Không có số đo hợp lệ'
+      : field === 'turbidity_pct' ? '0%: trong · 100%: đục · Không phải NTU'
+      : latest.value ? 'Số đo gần nhất từ thiết bị' : 'Chưa có số đo',
+    accent,
+  }
+}))
 </script>
 
 <template>
   <div class="app-shell">
     <header class="topbar">
-      <h1>IoT Flood Monitoring</h1>
+      <h1>Giám sát bể nuôi cá</h1>
       <div class="topbar-controls">
         <form class="device-selector" @submit.prevent="selectDevice">
           <label for="device-id" class="sr-only">Mã thiết bị</label>
@@ -81,7 +93,7 @@ const metrics = computed<MetricSummary[]>(() => [
           />
           <button type="submit" class="device-select-button">Chọn</button>
         </form>
-        <button type="button" :disabled="state === 'loading'" @click="refresh">Cập nhật</button>
+        <button type="button" :disabled="state === 'loading' || alertState === 'loading'" @click="refresh">Cập nhật</button>
         <div class="connection-state" role="status">
           <span
             class="state-dot"
@@ -103,18 +115,19 @@ const metrics = computed<MetricSummary[]>(() => [
         <span class="sample-time" v-if="latest">
           Lấy mẫu
           <time :datetime="latest.measured_at" :title="`${measuredAt} (giờ Việt Nam)`">
-            {{ Math.max(0, Date.now() - new Date(latest.measured_at).getTime()) < 60000
-              ? 'vừa xong'
-              : Math.max(0, Date.now() - new Date(latest.measured_at).getTime()) < 3600000
-                ? `${Math.floor((Date.now() - new Date(latest.measured_at).getTime()) / 60000)} phút trước`
-                : Math.max(0, Date.now() - new Date(latest.measured_at).getTime()) < 86400000
-                  ? `${Math.floor((Date.now() - new Date(latest.measured_at).getTime()) / 3600000)} giờ trước`
-                  : `${Math.floor((Date.now() - new Date(latest.measured_at).getTime()) / 86400000)} ngày trước` }}
+            {{ freshness.label }}
           </time>
         </span>
         <span v-else>{{ state === 'loading' ? 'Đang tải…' : 'Chưa có mẫu' }}</span>
         <span class="sensor-state" v-if="latest?.sensor_status === 'error'">Cảm biến lỗi</span>
+        <span class="realtime-state" :class="{ 'realtime-live': realtimeState === 'connected' }" role="status">
+          {{ realtimeState === 'connected' ? 'Live' : realtimeState === 'connecting' ? 'Đang kết nối' : realtimeState === 'reconnecting' ? 'Đang kết nối lại' : 'Mất kết nối' }}
+        </span>
       </section>
+
+      <div v-if="realtimeState === 'reconnecting' || realtimeState === 'offline'" class="data-notice" role="status">
+        Mất kết nối cập nhật trực tiếp · Số liệu từ lần tải gần nhất
+      </div>
 
       <div v-if="state === 'error'" class="data-notice data-notice-error" role="alert">
         {{ errorMessage }}
@@ -126,9 +139,16 @@ const metrics = computed<MetricSummary[]>(() => [
         Thiết bị offline · Số liệu từ mẫu gần nhất
       </div>
 
+      <div v-if="latest && freshness.stale" class="data-notice" role="status">
+        Dữ liệu cũ · Mẫu gần nhất: {{ freshness.label }}. Chưa có mẫu mới trong ít nhất 60 giây; kiểm tra thiết bị và kết nối.
+      </div>
+      <div v-if="latest && freshness.clockSkew" class="data-notice data-notice-error" role="status">
+        Giờ mẫu đo ở tương lai so với máy đang xem. Kiểm tra đồng bộ thời gian trước khi sử dụng số đo.
+      </div>
+
       <section
         class="metrics"
-        :class="{ 'metrics-stale': device?.connectivity === 'offline' }"
+        :class="{ 'metrics-stale': device?.connectivity === 'offline' || realtimeState !== 'connected' || freshness.stale || freshness.clockSkew }"
         aria-label="Các chỉ số hiện tại"
         :aria-busy="state === 'loading'"
       >
@@ -137,9 +157,18 @@ const metrics = computed<MetricSummary[]>(() => [
       </section>
 
       <section class="workspace-grid">
-        <WaterLevelChart />
-        <AlertList />
+        <WaterQualityHistory ref="history" :device-id="deviceId" />
+        <AlertList
+          :device-id="deviceId"
+          v-model:active-only="activeOnly"
+          :alerts="alerts"
+          :state="alertState"
+          :error-message="alertError"
+          @retry="refreshAlerts"
+          @acknowledged="refreshAcknowledgement"
+        />
       </section>
+      <ThresholdSettings :device-id="deviceId" @saved="thresholdsSaved" />
     </main>
 
   </div>

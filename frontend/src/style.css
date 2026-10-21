@@ -90,6 +90,8 @@ input:focus { border-color: var(--accent); }
 .sample-time { white-space: nowrap; }
 .sample-time time { color: #d1d5db; cursor: help; text-decoration: underline dotted var(--muted); text-underline-offset: 4px; }
 .sensor-state { margin-left: auto; color: var(--danger); }
+.realtime-state { margin-left: auto; color: var(--warning); white-space: nowrap; }
+.realtime-live { color: var(--accent); }
 .data-notice {
   margin-bottom: 12px;
   padding: 8px 12px;
@@ -102,7 +104,7 @@ input:focus { border-color: var(--accent); }
 .data-notice-error { color: var(--danger); }
 .metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -145,6 +147,12 @@ input:focus { border-color: var(--accent); }
 .chart-threshold-warning { stroke: var(--warning); stroke-opacity: 0.45; }
 .chart-threshold-danger { stroke: var(--danger); stroke-opacity: 0.45; }
 .chart-series { stroke: var(--accent); stroke-width: 2; }
+.chart-text { fill: var(--muted); font-size: 12px; }
+.panel-heading select { min-width: 0; max-width: 120px; height: 30px; color: inherit; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; }
+.panel-heading h2 { margin-right: auto; }
+.history-time-axis { display: flex; justify-content: space-between; gap: 8px; padding: 0 16px 8px; font-size: 11px; color: var(--muted); }
+.history-note, .history-error { padding: 4px 16px 12px; color: var(--muted); font-size: 12px; }
+.history-error { color: var(--danger); }
 .chart-empty { position: absolute; inset: 0; display: grid; place-content: center; color: var(--muted); font-size: 13px; }
 .chart-axis { padding: 0 16px 12px; color: var(--muted); font-size: 12px; text-align: right; }
 .empty-state { padding: 12px 16px; color: var(--muted); font-size: 13px; }
@@ -154,8 +162,38 @@ input:focus { border-color: var(--accent); }
 .alert-severity { font-weight: 500; }
 .alert-warning { color: var(--warning); }
 .alert-critical { color: var(--danger); }
+.alert-count { margin-left: auto; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.alert-filters { display: flex; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--border); }
+.alert-filters button { height: 28px; padding: 0 8px; font-size: 12px; background: transparent; }
+.alert-filters button[aria-pressed='true'] { color: var(--accent); border-color: var(--accent); }
+.alert-results { max-height: 320px; overflow-y: auto; }
+.alert-list { list-style: none; padding: 0; margin: 0; }
+.alert-content { min-width: 0; overflow-wrap: anywhere; }
+.alert-lifecycle { margin-top: 4px; font-size: 12px; color: var(--muted); }
+.alert-resolved .alert-severity { color: var(--muted); }
+.alert-error { display: grid; justify-items: start; gap: 8px; padding: 12px 16px; color: var(--danger); }
+.alert-limit { padding: 8px 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+.acknowledge-button { height: 26px; margin-top: 6px; padding: 0 8px; font-size: 12px; }
+.acknowledgement-error { padding: 8px 16px; }
+.threshold-panel { margin-top: 12px; }
+.threshold-panel .panel-heading { gap: 12px; padding-top: 8px; padding-bottom: 8px; }
+.threshold-panel .panel-heading button { font-size: 12px; }
+.threshold-form { padding: 16px; }
+.threshold-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; border: 0; padding: 0; margin: 16px 0; min-width: 0; }
+.threshold-group { display: grid; gap: 10px; min-width: 0; }
+.threshold-group h3 { font-size: 13px; margin: 0; font-weight: 600; }
+.threshold-group label { display: grid; gap: 4px; color: var(--muted); font-size: 12px; }
+.threshold-group input { width: 100%; }
+.settings-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+.settings-note { color: var(--muted); font-size: 12px; }
+.settings-error { color: var(--danger); }
+.settings-success { color: var(--online); }
 
 @media (max-width: 720px) {
+  .threshold-grid { grid-template-columns: minmax(0, 1fr); }
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metric-card:nth-child(3) { border-left: 0; }
+  .metric-card:nth-child(n+3) { border-top: 1px solid var(--border); }
   .app-shell { padding-right: 16px; padding-left: 16px; }
   .topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; padding: 8px 0; }
   .topbar h1 { grid-column: 1; grid-row: 1; }

@@ -5,6 +5,7 @@ export interface MetricSummary {
   value: string
   description: string
   accent: MetricAccent
+  unit?: string
 }
 
 export interface TelemetryReading {
@@ -13,8 +14,9 @@ export interface TelemetryReading {
   sequence: number
   measured_at: string
   received_at: string
-  water_level_cm: number | null
-  rainfall_mm: number
+  temperature_c: number | null
+  ph: number | null
+  turbidity_pct: number | null
   signal_strength_dbm: number
   sensor_status: 'normal' | 'error'
 }
@@ -29,3 +31,27 @@ export interface Device {
 }
 
 export type ReadingState = 'loading' | 'ready' | 'empty' | 'error'
+
+export interface AlertRecord {
+  id: number
+  device_id: string
+  alert_type: string
+  severity: string
+  message: string
+  started_at: string
+  ended_at: string | null
+  acknowledged_at: string | null
+}
+
+export interface Thresholds {
+  device_id: string
+  temperature_min_c: number
+  temperature_max_c: number
+  ph_min: number
+  ph_max: number
+  turbidity_warning_pct: number
+  turbidity_critical_pct: number
+  updated_at: string
+}
+
+export type ThresholdValues = Omit<Thresholds, 'device_id' | 'updated_at'>

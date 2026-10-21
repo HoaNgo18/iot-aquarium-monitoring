@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Device, TelemetryReading } from '../types/monitoring'
+import type { AlertRecord, Device, TelemetryReading, Thresholds, ThresholdValues } from '../types/monitoring'
 
 const client = axios.create({
   baseURL: '/api/v1',
@@ -33,4 +33,40 @@ export function describeApiError(error: unknown): string {
     if (!error.response) return 'Không kết nối được máy chủ. Vui lòng kiểm tra kết nối và thử lại.'
   }
   return 'Không tải được dữ liệu thiết bị. Vui lòng thử lại.'
+}
+
+export async function getAlerts(
+  deviceId: string,
+  activeOnly: boolean,
+  signal: AbortSignal,
+): Promise<AlertRecord[]> {
+  const response = await client.get<AlertRecord[]>(
+    `/devices/${encodeURIComponent(deviceId)}/alerts`,
+    { params: { active_only: activeOnly, limit: 50 }, signal },
+  )
+  return response.data
+}
+
+export async function getReadingHistory(
+  deviceId: string,
+  from: string,
+  signal: AbortSignal,
+): Promise<TelemetryReading[]> {
+  const response = await client.get<TelemetryReading[]>(
+    `/devices/${encodeURIComponent(deviceId)}/telemetry`,
+    { params: { from, limit: 500 }, signal },
+  )
+  return response.data
+}
+
+export function getThresholds(deviceId: string, signal: AbortSignal): Promise<Thresholds | null> {
+  return getOrNull(`/devices/${encodeURIComponent(deviceId)}/thresholds`, signal)
+}
+
+export async function saveThresholds(deviceId: string, values: ThresholdValues, signal: AbortSignal): Promise<Thresholds> {
+  return (await client.put<Thresholds>(`/devices/${encodeURIComponent(deviceId)}/thresholds`, values, { signal })).data
+}
+
+export async function acknowledgeAlert(deviceId: string, alertId: number, signal: AbortSignal): Promise<AlertRecord> {
+  return (await client.post<AlertRecord>(`/devices/${encodeURIComponent(deviceId)}/alerts/${alertId}/acknowledge`, null, { signal })).data
 }

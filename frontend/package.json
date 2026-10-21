@@ -1,9 +1,10 @@
 {
-  "name": "iot-flood-monitoring-frontend",
+  "name": "iot-aquarium-monitoring-frontend",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "dev": "vite",
     "type-check": "vue-tsc --noEmit",
     "build": "npm run type-check && vite build",

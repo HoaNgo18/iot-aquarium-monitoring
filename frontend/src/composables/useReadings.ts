@@ -9,32 +9,35 @@ export function useReadings(deviceId: Ref<string>) {
   const errorMessage = ref('')
   let controller: AbortController | null = null
 
-  async function refresh() {
+  async function refresh(background = false) {
     controller?.abort()
     const request = new AbortController()
     controller = request
-    state.value = 'loading'
-    device.value = null
-    latest.value = null
+    const targetDevice = deviceId.value
+    if (!background || !latest.value) state.value = 'loading'
+    if (!background) {
+      device.value = null
+      latest.value = null
+    }
     errorMessage.value = ''
     try {
       const [deviceResult, readingResult] = await Promise.all([
-        getDevice(deviceId.value, request.signal),
-        getLatestReading(deviceId.value, request.signal),
+        getDevice(targetDevice, request.signal),
+        getLatestReading(targetDevice, request.signal),
       ])
-      if (request.signal.aborted) return
+      if (request.signal.aborted || targetDevice !== deviceId.value) return
       device.value = deviceResult
       latest.value = readingResult
       state.value = readingResult ? 'ready' : 'empty'
     } catch (error) {
-      if (request.signal.aborted) return
+      if (request.signal.aborted || targetDevice !== deviceId.value) return
       request.abort()
       errorMessage.value = describeApiError(error)
       state.value = 'error'
     }
   }
 
-  watch(deviceId, refresh, { immediate: true })
+  watch(deviceId, () => void refresh(), { immediate: true })
   onScopeDispose(() => controller?.abort())
 
   return { device, latest, state, errorMessage, refresh }
