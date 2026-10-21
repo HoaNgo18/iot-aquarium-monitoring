@@ -3,12 +3,16 @@
 .env.*
 !.env.example
 
+# Machine-specific attachment to existing Docker data volumes
+/compose.override.yaml
+
 # Python
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
 .venv/
+.venv-firmware/
 
 # Node.js and Vue
 node_modules/
@@ -19,6 +23,9 @@ coverage/
 .pio/
 .pioenvs/
 .piolibdeps/
+.pio-core/
+firmware/include/config.local.h
+firmware/include/sensors_config.local.h
 
 # Editors and operating systems
 .idea/
@@ -31,4 +38,5 @@ Thumbs.db
 data/
 .playwright-cli/
 output/playwright/
+output/firmware/
 

@@ -1,0 +1,11 @@
+# Only for an existing installation with these two data volumes.
+# Copy to compose.override.yaml before changing the Compose project name.
+# Fresh installations should NOT copy this file.
+# External volumes are retained by `docker compose down -v`.
+volumes:
+  mqtt_data:
+    external: true
+    name: iot-flood-monitoring_mqtt_data
+  postgres_data:
+    external: true
+    name: iot-flood-monitoring_postgres_data
