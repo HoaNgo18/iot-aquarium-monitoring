@@ -1,240 +1,168 @@
 # Kế hoạch và tiến độ thực tế
 
-> Cập nhật lần cuối: 14/10/2026
->
-> Hạn hoàn thành theo phiếu giao nhiệm vụ: 05/01/2027
->
-> Trạng thái hiện tại: Dashboard đã hiển thị số đo và trạng thái thiết bị qua REST; bước tiếp theo là danh sách cảnh báo và WebSocket frontend
+> Cập nhật: 22/10/2026.
+> Đề tài chốt với người thực hiện: **Xây dựng hệ thống IoT giám sát bể nuôi cá**.
+> Hạn kỹ thuật trong Phiếu giao nhiệm vụ: 05/01/2027.
+> Lịch trong timeline.txt: thông tin đề tài đến 01/11; xét bảo vệ 27/12; nộp đến 17h 12/01/2027.
+> Đây là plan hiện hành; bản transition-plan-fish-monitoring.md ngày 15/10 chỉ còn là tài liệu lịch sử.
+> Thư mục làm việc hiện tại: D:\DATN\iot-flood-monitoring.
+> Tên repository GitHub và Compose project: iot-aquarium-monitoring; thư mục local giữ nguyên.
+> Ưu tiên hiện tại: nhận linh kiện, xác nhận board/pinout/điện áp, flash và hiệu chuẩn theo hardware-bringup.md; phần mềm và driver đã phát triển thêm ngày 21/10.
 
-Tài liệu này là nguồn thông tin chính về tiến độ thực tế. Sau mỗi buổi làm việc, cập nhật trạng thái đầu việc và mục **Bàn giao cho phiên làm việc tiếp theo**.
+## 1. Phạm vi
 
-## 1. Cách tiếp tục dự án trong một chat mới
+MVP: một bể, ESP32 đo pH/nhiệt độ/độ đục tương đối, MQTT, database, web realtime/lịch sử và cảnh báo.
+Phát hiện người bằng PIR để bật LED là mở rộng sau khi MVP chạy ổn định, không đo chuyển động của cá.
+Không thêm camera/AI, chẩn đoán bệnh, cho ăn hay điều khiển máy bơm vào MVP.
 
-Yêu cầu chat mới thực hiện lần lượt:
+Trạng thái: DONE có bằng chứng; READY đủ điều kiện làm; TODO chưa triển khai;
+VERIFY đã có code nhưng chưa kiểm chứng trên môi trường đích; IN PROGRESS đã làm một phần.
 
-1. Đọc `README.md`, `docs/architecture.md`, `docs/plan.md` và `docs/references.md`.
-2. Chạy `git status` và kiểm tra cấu trúc repository, không giả định nội dung trong tài liệu đã được triển khai.
-3. Đối chiếu mục **Tiến độ thực tế** với file và code đang tồn tại.
-4. Thực hiện đầu việc đầu tiên có trạng thái `READY` trong **Backlog chi tiết**.
-5. Sau khi kiểm chứng kết quả, cập nhật file này với ngày, trạng thái và bằng chứng.
+## 2. Tiến độ kế thừa
 
-## 2. Quy ước trạng thái
+Đến 14/10, nền tảng đề tài ngập đã có Docker Compose/Mosquitto/PostgreSQL,
+FastAPI MQTT ingestion, chống trùng, API latest/history, quản lý cảnh báo,
+WebSocket, dashboard Vue và xử lý loading/error/reconnect.
+Các minh chứng kiểm thử ngày 13–14/10 thuộc **phiên bản ngập cũ**,
+không được tính là kiểm chứng cho dữ liệu cảm biến bể cá.
 
-| Trạng thái | Ý nghĩa |
-| --- | --- |
-| `DONE` | Đã hoàn thành và có file, code, ảnh hoặc kết quả kiểm thử làm bằng chứng |
-| `IN PROGRESS` | Đang thực hiện |
-| `READY` | Đủ thông tin để bắt đầu ngay |
-| `BLOCKED` | Không thể tiếp tục nếu chưa giải quyết phụ thuộc ghi kèm |
-| `TODO` | Chưa đến thời điểm hoặc chưa đủ thông tin |
+Ngày 17/10 đã sửa trực tiếp bản Phiếu giao nhiệm vụ duy nhất:
+tên ngắn, ba thông số nước và chức năng cốt lõi.
+Người thực hiện đã có ESP32, breadboard, dây và điện trở; ngày 19/10 xác nhận sẽ mua cảm biến,
+ngày 21/10 xác nhận đã đặt DS18B20, PH-4502C, độ đục và SR501, dự kiến vài ngày nữa nhận.
+Ảnh độ đục là đầu đo kèm mạch đỏ ba chân, chưa có mã/pinout/output; chưa xác nhận đã nhận hàng.
+Việc GVHD duyệt và cập nhật QLĐT vẫn cần người thực hiện xác nhận.
 
-Không chuyển một đầu việc sang `DONE` chỉ vì đã thảo luận hoặc đã lập kế hoạch.
+## 3. Đợt chuyển đổi phần mềm đầu tiên — 19/10
 
-## 3. Tiến độ thực tế
-
-### Đã hoàn thành
-
-- `DONE` Xác định đề tài: hệ thống IoT quan sát và cảnh báo sớm nguy cơ ngập cục bộ.
-- `DONE` Tạo repository `iot-flood-monitoring`.
-- `DONE` Tạo README giới thiệu phạm vi, chức năng và kiến trúc cấp cao.
-- `DONE` Tạo tài liệu kiến trúc ban đầu, luồng dữ liệu và MQTT topic dự kiến.
-- `DONE` Khảo sát các repository và tài liệu mã nguồn có thể tham khảo.
-- `DONE` Chốt stack: PlatformIO/Arduino, Mosquitto, FastAPI, PostgreSQL và Vue 3/TypeScript.
-- `DONE` Tạo và kiểm thử Docker Compose cho Mosquitto và PostgreSQL.
-- `DONE` Smoke test PostgreSQL và MQTT publish/subscribe trên máy phát triển.
-- `DONE` Tạo telemetry simulator với năm kịch bản và kiểm thử end-to-end qua Mosquitto.
-- `DONE` Tạo khung FastAPI, migration PostgreSQL, MQTT ingestion và REST API latest/history.
-- `DONE` Chạy 7 unit test backend trong Docker, tất cả đều pass ngày 13/10/2026.
-- `DONE` Smoke test luồng simulator → MQTT → backend → PostgreSQL → REST API ngày 13/10/2026.
-- `DONE` Triển khai và kiểm thử cảnh báo mực nước, tăng nhanh, mưa lớn, lỗi cảm biến và offline.
-- `DONE` WebSocket phát telemetry, status và snapshot cảnh báo theo thời gian thực.
-- `DONE` Khởi tạo Vue 3/TypeScript/Vite và bố cục dashboard responsive.
-- `DONE` Refactor backend theo lớp `api → services/domain → repositories`; `main.py` chỉ còn application factory và lifecycle.
-- `DONE` Tách frontend thành view, component và kiểu dữ liệu dùng chung.
-- `DONE` Chuyển WebSocket probe sang `backend/scripts/` và tạo smoke test Python đa nền tảng.
-- `DONE` FE-003: dashboard đọc số đo gần nhất qua REST, hiển thị mực nước/lượng mưa và thời gian lấy mẫu theo giờ Việt Nam.
-- `DONE` FE-004: hiển thị online/offline, trạng thái cảm biến và RSSI mẫu gần nhất; chọn thiết bị và cập nhật thủ công.
-- `DONE` Kiểm tra dashboard bằng Playwright với REST thật và phản hồi giả lập cho các trạng thái lỗi/loading/cảm biến; kiểm tra desktop và mobile.
-- `DONE` Thiết kế lại dashboard theo bố cục giám sát gọn; chỉ đổi template/CSS, giữ nguyên script, kiểm tra responsive 360px và production build đạt.
-- `DONE` Chia và commit mã nguồn, hạ tầng, smoke test và tài liệu thành các nhóm riêng ngày 14/10/2026.
-
-### Chưa hoàn thành
-
-- Chưa chốt cảm biến mực nước và cảm biến lượng mưa sẽ mua.
-- Chưa xác nhận tình trạng mua linh kiện.
-- Chưa tạo source code firmware.
-- Frontend chưa có danh sách cảnh báo, biểu đồ lịch sử hoặc cập nhật tự động qua WebSocket. Số đo/trạng thái hiện cập nhật bằng REST khi mở trang, đổi thiết bị hoặc bấm **Cập nhật**.
-- Chưa có dữ liệu cảm biến, kết quả hiệu chuẩn hoặc mô hình thử nghiệm.
-
-## 4. Phạm vi MVP bắt buộc
-
-MVP được xem là hoàn thành khi chứng minh được luồng sau:
-
-```text
-Cảm biến hoặc bộ giả lập
-    -> ESP32/MQTT publisher
-    -> MQTT broker
-    -> Backend
-    -> PostgreSQL
-    -> REST API/WebSocket
-    -> Giao diện web và cảnh báo
-```
-
-MVP gồm:
-
-- Một nút đo có định danh ổn định.
-- Giá trị mực nước theo centimet và lượng mưa theo milimet.
-- Dữ liệu thời gian thực và lịch sử.
-- Trạng thái online/offline của thiết bị.
-- Cảnh báo vượt ngưỡng mực nước.
-- Cảnh báo tốc độ tăng mực nước.
-- Cảnh báo mất kết nối hoặc dữ liệu cảm biến không hợp lệ.
-- Mô hình thử nghiệm và kết quả đánh giá định lượng.
-
-LoRa, bản đồ, nhiều nút đo, SMS, ứng dụng di động và dự báo bằng máy học không thuộc MVP.
-
-## 5. Mốc thời gian điều chỉnh
-
-| Thời gian | Mục tiêu | Điều kiện hoàn thành |
+| ID | Trạng thái | Kết quả |
 | --- | --- | --- |
-| 09–12/10 | Khóa phạm vi và khởi tạo kỹ thuật | Chốt stack, BOM, hợp đồng dữ liệu và commit đầu tiên |
-| 13–19/10 | Firmware nền và MQTT | ESP32 hoặc simulator gửi được telemetry và heartbeat |
-| 20–26/10 | Cảm biến và hiệu chuẩn bước đầu | Đọc ổn định hai cảm biến, phát hiện giá trị lỗi |
-| 27/10–02/11 | Backend tiếp nhận dữ liệu | Backend subscribe MQTT, kiểm tra payload và lưu PostgreSQL |
-| 03–09/11 | API và cảnh báo | Có API latest/history và ba loại cảnh báo cơ bản |
-| 10–16/11 | Frontend dữ liệu hiện tại | Dashboard hiển thị số đo, trạng thái và cảnh báo |
-| 17–23/11 | Lịch sử và thời gian thực | Biểu đồ lịch sử và cập nhật WebSocket hoạt động |
-| 24–30/11 | Tích hợp MVP | Luồng cảm biến đến giao diện chạy xuyên suốt |
-| 01–07/12 | Ổn định hệ thống | Có reconnect, logging, cấu hình và xử lý lỗi |
-| 08–14/12 | Mô hình và kịch bản kiểm thử | Hoàn thành bể thử, dụng cụ đo chuẩn và test plan |
-| 15–21/12 | Thực nghiệm | Thu đủ dữ liệu độ chính xác, độ trễ và độ ổn định |
-| 22–28/12 | Đóng băng sản phẩm | Hoàn thiện code, tài liệu, ảnh, biểu đồ và báo cáo nháp |
-| 29/12–05/01 | Dự phòng và bàn giao | Báo cáo cuối, slide, video và kịch bản demo |
+| AQ-001 | DONE | Schema v2: temperature_c, ph, turbidity_pct; kiểm tra miền giá trị, timestamp và null |
+| AQ-002 | DONE | Topic aquarium-monitoring; backend và simulator thống nhất namespace |
+| AQ-003 | DONE | Migration 0002 đạt trên PostgreSQL thật ngày 20/10; đối chiếu số lượng và fingerprint cả bốn bảng cũ ngay sau migration đều giữ nguyên; có backup trước nâng cấp |
+| AQ-004 | DONE | Simulator tám kịch bản, bao gồm lỗi từng cảm biến và offline |
+| AQ-005 | DONE | Cảnh báo nhiệt độ/pH/độ đục, cảm biến lỗi, offline; cập nhật/đóng bản ghi và giữ cảnh báo khi số đo chưa phục hồi |
+| AQ-006 | DONE | Dashboard ba chỉ số, đơn vị mới và trạng thái thiết bị |
+| AQ-007 | DONE | Biểu đồ lịch sử REST 1/6/24 giờ, đổi chỉ số, đường ngưỡng cấu hình, ngắt đường tại null |
+| AQ-008 | DONE | Ngày 21/10: 34 test backend, 8 test logic frontend, 4 test firmware host/69 payload đạt; frontend build đạt. 5 test simulator đã đạt từ đợt trước; chưa thay kiểm chứng board thật |
+| AQ-009 | DONE | Đã kiểm tra SQLite tạm; ngày 20/10 bổ sung Playwright trên Docker/PostgreSQL thật: đổi thiết bị, biểu đồ pH/6 giờ, lỗi pH tự cập nhật, phục hồi, desktop 1280px/mobile 360px |
+| AQ-010 | DONE | Compose rebuild đạt, bốn dịch vụ healthy; smoke MQTT → PostgreSQL → REST/WebSocket và 15 kiểm tra live về cảnh báo/null/chống trùng/Last Will đạt ngày 20/10 |
+| AQ-011 | DONE | Form ghi đủ sáu ngưỡng, xác nhận cảnh báo idempotent, chỉ báo mẫu cũ từ 60 giây/lệch giờ tương lai trên web; đã kiểm tra browser với PostgreSQL thật ngày 21/10 |
 
-Trong hai tuần đầu nên dành 16–18 giờ/tuần để bù phần khởi động chậm. Sau khi có MVP nền, duy trì tối thiểu 12 giờ/tuần.
+Ngày 20/10 xác nhận thư mục gốc đã đổi từ D:\ĐATN sang D:\DATN; thư mục repository vẫn là iot-flood-monitoring.
+Tại thời điểm 20/10 giữ nguyên tên Compose project, database và volume để sử dụng lại dữ liệu đã có.
+Ngày 22/10 đổi tên project/container và repository GitHub sang iot-aquarium-monitoring;
+database/user và volume cũ được gắn lại bằng local override external, không khởi tạo lại dữ liệu.
+Ngưỡng hiện tại chỉ dùng demo; độ đục tương đối 0–100 chưa phải NTU.
+Ngày 20/10 Docker đã hoạt động, migration 0002 và pipeline MQTT/PostgreSQL thật đã được xác minh.
+Bản sao trước nâng cấp nằm tại D:\DATN\.codex_tmp\aquarium-pre-v2-20261020.dump.
+Chi tiết minh chứng và trạng thái demo: [docker-verification-2026-10-20.md](docker-verification-2026-10-20.md).
 
-## 6. Backlog chi tiết
+Minh chứng browser nằm trong output/playwright/aquarium-desktop.png và aquarium-mobile-error.png
+(thư mục local bị Git bỏ qua). Bộ test backend nằm trong backend/tests; test simulator trong simulator/tests.
+docker compose config --quiet và git diff --check đã đạt.
 
-### 6.1. Quyết định và quản lý dự án
+## 4. Backlog tiếp theo
 
-| ID | Trạng thái | Đầu việc | Kết quả cần có |
+| Ưu tiên | ID | Trạng thái | Đầu việc / điều kiện hoàn thành |
 | --- | --- | --- | --- |
-| PM-001 | `DONE` | Chốt stack công nghệ | Quyết định được ghi trong architecture và ADR-0001 |
-| PM-002 | `READY` | Chốt danh sách linh kiện và ngân sách | BOM có model, số lượng, giá dự kiến và trạng thái mua |
-| PM-003 | `DONE` | Đưa README và tài liệu vào Git | README và tài liệu được lưu trong commit tài liệu riêng ngày 14/10/2026 |
-| PM-004 | `TODO` | Tạo nhật ký tiến độ tuần | Mỗi tuần có việc đã làm, vấn đề, số giờ và kế hoạch tuần sau |
-| PM-005 | `TODO` | Theo dõi rủi ro | Bảng rủi ro phần cứng, thời gian, dữ liệu và tích hợp |
+| P0 | HW-001 | VERIFY | Ba environment fake/sensors/alias build đạt cho esp32dev; còn xác nhận đúng board, flash và log serial |
+| P0 | FW-001 | VERIFY | Firmware fake v2, NTP, Wi-Fi/MQTT reconnect và Last Will; bốn test host/69 payload đạt; chưa thử mạng trên board |
+| P0 | HW-002 | IN PROGRESS | Đã đặt đủ bốn loại; chốt DS18B20/PH-4502C/SR501, có ảnh độ đục; còn ngày nhận, mã độ đục và mức áp/pinout thật |
+| P0 | FW-002 | VERIFY | Có driver DS18B20 không chặn, ADC1 lọc/hiệu chuẩn hai điểm và chẩn đoán mV; chưa thử đầu dò thật, analog chưa hiệu chuẩn vẫn null |
+| P0 | CAL-001 | TODO | Hiệu chuẩn pH bằng buffer, đối chiếu nhiệt độ, xác lập chỉ số độ đục tương đối |
+| P0 | TEST-001 | IN PROGRESS | Có F01–F11 và hardware-bringup.md; cần bổ sung dụng cụ tham chiếu/biểu mẫu kết quả theo linh kiện nhận được |
+| P0 | TEST-002 | TODO | Tích hợp cảm biến thật → MQTT → PostgreSQL → dashboard; chụp ảnh/lưu log |
+| P0 | TEST-003 | TODO | Thực nghiệm sai số, độ lặp lại, độ trễ, mất mẫu, reconnect và chạy liên tục |
+| P0 | DOC-001 | IN PROGRESS | Kiến trúc/hướng dẫn vận hành và nhận hàng đã cập nhật; quyển đồ án/kết quả thực nghiệm chưa hoàn thành |
+| P1 | WEB-001 | DONE | Form ngưỡng, xử lý lỗi API/đổi thiết bị, xác nhận cảnh báo và tuổi mẫu web đã kiểm thử; không tự tạo timeout alert phía server |
+| P1 | LED-001 | VERIFY | Có PIR→LED tùy chọn, warmup 60 giây/giữ 15 giây; mặc định tắt, host test đạt, chưa thử SR501/LED thật |
+| P2 | EXT-001 | TODO | Mở rộng khác chỉ khi MVP và thực nghiệm đã hoàn tất |
 
-### 6.2. Firmware và phần cứng
+## 5. Mốc điều chỉnh
 
-| ID | Trạng thái | Đầu việc | Kết quả cần có |
-| --- | --- | --- | --- |
-| FW-001 | `DONE` | Chọn môi trường firmware | PlatformIO với Arduino framework |
-| FW-002 | `TODO` | Khởi tạo project ESP32 | Build và nạp được chương trình hello/serial |
-| FW-003 | `TODO` | Tạo module cấu hình | Wi-Fi, MQTT, device ID và chu kỳ gửi không hard-code vào logic |
-| FW-004 | `TODO` | Đọc cảm biến mực nước | Có giá trị cm, timeout, giới hạn hợp lệ và log lỗi |
-| FW-005 | `TODO` | Đọc cảm biến lượng mưa | Có tổng mm và lượng mưa theo cửa sổ thời gian |
-| FW-006 | `TODO` | Lọc và hiệu chuẩn | Ghi dữ liệu thô, giá trị đã lọc và hệ số hiệu chuẩn |
-| FW-007 | `TODO` | Publish MQTT | Telemetry đúng schema, QoS được chốt, reconnect hoạt động |
-| FW-008 | `TODO` | Heartbeat và trạng thái | Backend xác định được online/offline |
-| FW-009 | `TODO` | Cảnh báo cục bộ | LED/buzzer hoạt động với ngưỡng thử nghiệm |
+| Thời gian | Kết quả cần có |
+| --- | --- |
+| 19–25/10 | Đã đạt Docker v2, form ngưỡng/ack/tuổi mẫu và firmware fake/sensors build; đã đặt linh kiện; tiếp theo flash board, nhận hàng và bắt đầu đọc DS18B20 |
+| 26/10–01/11 | Xác minh Compose thật, ổn định dashboard; chốt hồ sơ đề tài với GVHD |
+| 02–08/11 | Firmware nền chạy ổn định; tích hợp đầu vào có sẵn |
+| 09–15/11 | Đọc được cả ba cảm biến thật và hiệu chuẩn bước đầu, phụ thuộc ngày nhận hàng |
+| 16–22/11 | Tích hợp toàn tuyến bằng dữ liệu thật |
+| 23–29/11 | Chốt mô hình, dụng cụ tham chiếu, test plan và chạy thử thực nghiệm |
+| 30/11–13/12 | Thu dữ liệu thực nghiệm chính; viết kết quả song song |
+| 14–20/12 | Phân tích dữ liệu, sửa lỗi chính và đóng băng MVP |
+| 21–27/12 | Quyển nháp đầy đủ và demo để GVHD xem xét |
+| 28/12–05/01 | Hoàn thiện kỹ thuật và tài liệu |
+| 06–12/01 | Chỉnh quyển và hồ sơ nộp theo lịch đã cung cấp |
 
-### 6.3. Hạ tầng phát triển
+## 6. Bàn giao
 
-| ID | Trạng thái | Đầu việc | Kết quả cần có |
-| --- | --- | --- | --- |
-| INF-001 | `DONE` | Tạo Docker Compose nền | Mosquitto và PostgreSQL đều healthy; smoke test đã pass ngày 13/10/2026 |
-| INF-002 | `TODO` | Cấu hình Mosquitto cho phát triển | Có listener, user/password và volume dữ liệu |
-| INF-003 | `DONE` | Tạo telemetry simulator | Năm kịch bản; 5 unit test và MQTT end-to-end đã pass ngày 13/10/2026 |
-| INF-004 | `DONE` | Quản lý biến môi trường | Có `.env.example`, `.env` được bỏ qua bởi Git |
-| INF-005 | `TODO` | Thêm kiểm tra tự động | Có lệnh lint/test/build tối thiểu cho từng thành phần |
+Bắt đầu phiên sau bằng git status, README, tài liệu kiến trúc và file này.
+Có các thay đổi chưa commit từ trước đợt chuyển đổi; không reset hoặc ghi đè phần không liên quan.
+Mở repository tại D:\DATN\iot-flood-monitoring trong Codex/IDE. Nếu phiên vẫn cấp quyền cho D:\ĐATN,
+cần mở lại workspace theo đường dẫn mới để thao tác bình thường.
 
-### 6.4. Backend và cơ sở dữ liệu
+1. Pipeline Docker v2 đã đạt; kiểm tra health nếu khởi động lại môi trường.
+2. Xác nhận model ESP32/cổng COM, điền firmware/include/config.local.h và flash esp32-fake; thực hiện firmware-test-plan.md. Broker hiện mở cổng LAN 1884; dùng IP LAN máy chạy Docker, không dùng localhost trên ESP32.
+3. Khi nhận hàng, xác nhận pinout/nguồn/đầu ra, cập nhật BOM và thực hiện docs/hardware-bringup.md; firmware sensors có sẵn nhưng chưa hiệu chuẩn.
+4. Cấu hình ngưỡng sau khi chọn loài cá và hiệu chuẩn. Không lấy ngưỡng mặc định làm kết luận sinh học.
 
-| ID | Trạng thái | Đầu việc | Kết quả cần có |
-| --- | --- | --- | --- |
-| BE-001 | `DONE` | Khởi tạo FastAPI | Container healthy và `/health` trả 200 ngày 13/10/2026 |
-| BE-002 | `DONE` | Thiết kế schema database | Migration `0001_initial_schema` đã chạy trên PostgreSQL |
-| BE-003 | `DONE` | MQTT consumer | Nhận telemetry/status thật từ Mosquitto trong smoke test |
-| BE-004 | `DONE` | Lưu telemetry an toàn | Lưu đủ timestamp server/device; khóa chống trùng và unit test duplicate đã pass |
-| BE-005 | `DONE` | API dữ liệu hiện tại | Endpoint latest và trạng thái thiết bị hoạt động |
-| BE-006 | `DONE` | API lịch sử | Endpoint history trả đúng 3 mẫu và hỗ trợ lọc thời gian/limit |
-| BE-007 | `DONE` | Bộ luật cảnh báo | Luật thuần tách khỏi DB; flood/sensor-error/đóng cảnh báo đã pass end-to-end ngày 13/10/2026 |
-| BE-008 | `DONE` | WebSocket | Client thật nhận telemetry/alert từ kịch bản flood ngày 13/10/2026 |
-| BE-009 | `DONE` | Kiểm thử backend | 20 unit/integration test pass trong Docker ngày 13/10/2026 |
+## 7. Firmware nền — 19/10
 
-### 6.5. Frontend
+Đã thêm firmware ESP32, build hai environment esp32-fake và esp32-pending-sensors.
+Fake dùng tank-demo-001 riêng; bảy kịch bản và phím serial để thử cảnh báo.
+Pending chưa đọc cảm biến, trả null cho ba chỉ số. Driver/hiệu chuẩn vẫn nằm trong FW-002/CAL-001.
+Chờ NTP trước khi gửi; QoS 1, status retained, Last Will, reconnect và hàng đợi RAM có giới hạn.
+Bốn test host biên dịch mã C++ và đưa 67 payload qua schema/ingestion; kiểm tra chống trùng và cảnh báo đạt.
+Sửa backend để timestamp Last Will không kéo lùi last_seen hoặc mở cảnh báo offline từ lúc boot.
+Hai test hồi quy bổ sung cho Last Will/last_seen; tổng backend hiện có 31 test.
+Tại thời điểm hoàn thành firmware ngày 19/10, Docker chưa hoạt động; ngày 20/10 đã xác minh pipeline như bên dưới.
+Chưa flash, chưa kiểm chứng F01–F08 trên board thật.
 
-| ID | Trạng thái | Đầu việc | Kết quả cần có |
-| --- | --- | --- | --- |
-| FE-001 | `DONE` | Khởi tạo Vue 3 + TypeScript + Vite | Type-check/build pass; container healthy tại cổng 5173 ngày 13/10/2026 |
-| FE-002 | `DONE` | Tạo bố cục dashboard | Có view/component/type riêng; type-check và production build pass ngày 13/10/2026 |
-| FE-003 | `DONE` | Hiển thị số đo mới nhất | REST thật khớp mực nước/lượng mưa/timestamp; null không hiển thị thành 0; build và browser check pass ngày 13/10/2026 |
-| FE-004 | `DONE` | Hiển thị trạng thái thiết bị | Online/offline, cảm biến và RSSI mẫu gần nhất; trạng thái offline giữ số đo đã lưu có chú thích |
-| FE-005 | `TODO` | Biểu đồ lịch sử | Chọn khoảng thời gian và hiển thị đúng đơn vị |
-| FE-006 | `READY` | Danh sách cảnh báo | Mức độ, nguyên nhân, thời gian và trạng thái xử lý |
-| FE-007 | `READY` | Cập nhật WebSocket | Giao diện cập nhật không cần tải lại trang |
-| FE-008 | `IN PROGRESS` | Trạng thái lỗi giao diện | REST đã có loading/API lỗi/404/thử lại; còn trạng thái lỗi lịch sử/cảnh báo và reconnect WebSocket |
+## 8. Việc tiếp theo — cập nhật 20/10
 
-### 6.6. Kiểm thử, thực nghiệm và báo cáo
+Các kết quả 31/5/4 test là minh chứng đã có từ đợt triển khai firmware.
+Ngày 20/10 đã build lại Docker, chạy migration thật, smoke test, probe 15 kiểm tra và browser QA;
+không tính các probe này thành số unit test mới. Báo cáo nằm trong docker-verification-2026-10-20.md.
+Đã xác nhận đặt hàng/model như BOM cập nhật 21/10; chưa có model ESP32/cổng COM, cấu hình mạng,
+ngày nhận cụ thể, điện áp đầu ra độ đục hoặc kết quả flash.
 
-| ID | Trạng thái | Đầu việc | Kết quả cần có |
-| --- | --- | --- | --- |
-| TEST-001 | `TODO` | Thiết kế mô hình thử nghiệm | Sơ đồ, kích thước bể, vị trí cảm biến và phương pháp tạo mưa |
-| TEST-002 | `TODO` | Viết test plan | Ma trận kịch bản, đầu vào, kết quả mong đợi và tiêu chí đạt |
-| TEST-003 | `TODO` | Đánh giá độ chính xác | So sánh cảm biến với thước/ống đong tại nhiều mức |
-| TEST-004 | `TODO` | Đánh giá độ trễ | Đo từ lúc lấy mẫu đến lúc giao diện cập nhật/cảnh báo |
-| TEST-005 | `TODO` | Đánh giá độ ổn định | Chạy liên tục và thống kê mất mẫu, reconnect, lỗi |
-| TEST-006 | `TODO` | Kiểm thử tình huống lỗi | Mất Wi-Fi, broker dừng, cảm biến lỗi và thiết bị khởi động lại |
-| DOC-001 | `IN PROGRESS` | Viết kiến trúc và tài liệu kỹ thuật | Cập nhật cùng code, không chờ đến cuối kỳ |
-| DOC-002 | `TODO` | Viết báo cáo theo chương | Có bản nháp từng chương từ giai đoạn triển khai |
-| DOC-003 | `TODO` | Chuẩn bị minh chứng | Ảnh lắp đặt, log, dữ liệu CSV, biểu đồ và video demo |
+1. **AQ-010 / AQ-003 — DONE:** Compose, migration PostgreSQL và smoke test v2 đã đạt;
+   dữ liệu ngập giữ nguyên. Giữ bốn dịch vụ đang chạy để tiếp tục nối ESP32.
+2. **HW-001 / FW-001:** xác nhận model board và cổng COM, tạo config.local.h với Wi-Fi/IP LAN broker,
+   nạp esp32-fake. Hoàn thành khi serial ghi nhận đồng bộ NTP/PUBACK và web tank-demo-001 hiển thị dữ liệu.
+3. **FW-001:** thực hiện F01–F08 trong firmware-test-plan.md; thử ngưỡng, null riêng từng đầu dò,
+   mất Wi-Fi, broker khởi động lại, ngắt nguồn và chạy liên tục. Lưu log/ảnh, ghi rõ PASS/FAIL thực tế.
+4. **HW-002 / FW-002 / CAL-001:** driver đã build; khi nhận hàng thử lần lượt DS18B20 → PH-4502C → độ đục,
+   kiểm tra nguồn/output trước khi nối, hiệu chuẩn và đối chiếu. esp32-pending-sensors hiện là alias của esp32-sensors.
+5. **WEB-001 — DONE / DOC-001:** đã có form ngưỡng, ack và tuổi mẫu; tiếp tục viết quyển yêu cầu/kiến trúc
+   và bổ sung dữ liệu thực nghiệm khi có phần cứng thật.
 
-## 7. Tiêu chí hoàn thành toàn bộ đồ án
+PIR phát hiện người bật LED tiếp tục là phần mở rộng sau khi MVP và kiểm thử chính đã ổn định.
 
-- Repository có hướng dẫn chạy lại hệ thống từ đầu.
-- Người khác có thể dùng Docker Compose để chạy các dịch vụ phần mềm.
-- Thiết bị gửi dữ liệu thật và hệ thống vẫn có simulator để kiểm thử.
-- Không lưu Wi-Fi password, token hoặc mật khẩu database trong Git.
-- Các giá trị hiển thị có đơn vị, timestamp và trạng thái chất lượng dữ liệu.
-- Cảnh báo có lý do rõ ràng và tái hiện được bằng kịch bản kiểm thử.
-- Báo cáo có phương pháp hiệu chuẩn, số liệu gốc và cách tính các chỉ số.
-- Demo có phương án dự phòng bằng dữ liệu ghi sẵn hoặc video.
+## 9. Kết quả Docker thực tế — 20/10
 
-## 8. Bàn giao cho phiên làm việc tiếp theo
+- Docker Engine 29.0.1; mqtt/db/backend/frontend đều healthy, API 0.2.0 báo database up và mqtt connected.
+- Migration ở 0002_aquarium_monitoring. Trước/sau migration: devices 16, telemetry cũ 51,
+  thresholds cũ 12, alerts cũ 39; fingerprint từng bảng giống hệt. Sau kiểm thử, ba bảng dữ liệu ngập vẫn giữ nguyên.
+- Smoke test REST/history và WebSocket telemetry/cảnh báo đạt; probe riêng tank-probe-6aab7a7e lưu đúng 11 mẫu,
+  chống trùng và đạt cả 15 kiểm tra cảnh báo/phục hồi/null/Last Will.
+- Dashboard Docker cập nhật lỗi pH và phục hồi qua WebSocket; mobile không tràn ngang, console không có lỗi/warning được ghi nhận.
+- Có 13 mẫu demo tại tank-preview-001. Simulator đã kết thúc nên trạng thái Offline là mong đợi;
+  dữ liệu và lịch sử vẫn xem được tại http://localhost:5173/?device_id=tank-preview-001.
+- Không có firmware được flash trong đợt này. HW-001/FW-001 vẫn VERIFY, cảm biến/hiệu chuẩn vẫn TODO.
 
-### Việc cần làm ngay
+## 10. Phần mềm/firmware chuẩn bị nhận hàng — 21/10
 
-1. Thực hiện `PM-002`: chốt BOM và xác nhận linh kiện đã mua/chưa mua.
-2. Tiếp tục phần mềm với `FE-006`: nối REST danh sách cảnh báo, sau đó `FE-007`: WebSocket và reconnect. `FE-003`/`FE-004` đã hoàn thành.
-3. Thêm biểu đồ lịch sử `FE-005` và đọc ngưỡng thật từ backend; các đường ngưỡng hiện chỉ minh họa.
-
-### Thông tin cần người thực hiện xác nhận
-
-- Đã mua ESP32 và cảm biến nào hay chưa.
-- Máy phát triển đã có Docker Desktop và PlatformIO hay chưa.
-- Có thể dành bao nhiêu giờ mỗi tuần trong hai tuần tới.
-
-### Bằng chứng hiện có
-
-- `README.md`
-- `docs/architecture.md`
-- `docs/references.md`
-- `docs/decisions/0001-technology-stack.md`
-- `compose.yaml`, `.env.example` và cấu hình Mosquitto
-- `scripts/infra-smoke-test.ps1`
-- `simulator/` gồm bộ sinh dữ liệu, MQTT publisher, Dockerfile, hướng dẫn và unit test.
-- Runtime local ngày 13/10/2026: PostgreSQL tại `127.0.0.1:5432`; Docker Mosquitto tại cổng host `1884` vì dịch vụ Mosquitto của Windows đang dùng `1883`.
-- PostgreSQL và Docker Mosquitto đều healthy; smoke test đã pass.
-- Simulator đã publish thành công kịch bản `flood` và `sensor-error`; subscriber nhận đủ telemetry, trạng thái online/offline và giá trị lỗi `null`.
-- `backend/` gồm FastAPI, SQLAlchemy models, Alembic migration, MQTT consumer, REST API và 7 unit test đã pass.
-- `scripts/smoke_test.py` đã pass ngày 13/10/2026 trên Windows; REST trả đúng 3 mẫu và WebSocket nhận telemetry cùng water-level alert.
-- Alembic ở revision `0001_initial_schema`; backend, PostgreSQL và Mosquitto đều healthy sau kiểm thử.
-- Backend có 12 unit test pass. Kịch bản `flood` tạo water-level, rapid-rise, heavy-rain và offline alert; `sensor-error` tạo sensor-error alert; dữ liệu normal đóng các cảnh báo đã hết điều kiện.
-- Backend có tổng cộng 20 unit/integration test pass sau refactor. WebSocket client lọc theo device đã nhận status, telemetry và snapshot water-level alert từ luồng MQTT thật.
-- Frontend dùng Vue 3.5, TypeScript, Vite và Nginx; `npm run build` pass, container healthy, trang `/` trả 200 và reverse proxy `/api` gọi được backend.
-- Frontend đã kết nối REST device/latest qua Axios và `useReadings`; Vite có proxy `/api` và `/ws` cho development. Chưa có kết nối WebSocket frontend; firmware chưa có source code.
-- Browser check FE-003/FE-004 đã pass: `node-001` từ simulator thật hiển thị 17,64 cm, 0,48 mm, timestamp đúng và offline; chọn thiết bị không tồn tại trả trạng thái trống. Phản hồi giả lập kiểm tra loading, online, cảm biến lỗi/null, thiết bị chỉ có status, API 500 và phục hồi.
-- Ảnh kiểm tra local tại `output/playwright/fe003-desktop.png` và `output/playwright/fe003-mobile.png`; script `output/playwright/rest-dashboard-check.js`. Các artifact này được bỏ qua bởi Git.
-- Dashboard mới đã qua type-check/build và Playwright desktop/360px, gồm trường hợp trống, cảm biến lỗi và số đo lớn. Checksum các khối script Vue trước/sau thiết kế lại khớp nhau.
-- Commit `14907c2`: refactor backend; `1da5934`: smoke test đa nền tảng; `e182901`: frontend REST/dashboard; `405777b`: tích hợp hạ tầng frontend và loại artifact khỏi Git/build. Đợt này chỉ commit local, chưa push.
+- Backend có POST acknowledge, kiểm tra cảnh báo thuộc thiết bị, gọi lặp giữ mốc xác nhận;
+  không đóng cảnh báo. Không đổi schema/migration và không sửa bảng ngập lưu trữ.
+- Web lưu đủ sáu ngưỡng, kiểm tra miền/thứ tự, xử lý lỗi/thử lại và phản hồi cũ khi chuyển thiết bị;
+  cập nhật biểu đồ sau lưu. Tuổi mẫu tự tăng mỗi giây, từ 60 giây hiện dữ liệu cũ,
+  timestamp tương lai quá 30 giây có thông báo; đây là chỉ báo trình duyệt, chưa phải server timeout.
+- Firmware sensors đọc DS18B20 async, ADC1 lọc 15 mẫu/hiệu chuẩn hai điểm;
+  thiếu calibration/ngoài miền/quá tuổi cache thành null riêng từng kênh. Serial v hỗ trợ raw mV khi chưa có mạng.
+- Thêm PIR SR501→LED cục bộ tùy chọn, mặc định tắt, warmup 60 giây và giữ đèn 15 giây từ lần OUT cao cuối.
+- 34 test backend, 8 test frontend, 4 test host firmware đạt; ba cấu hình ESP32 build đạt.
+  Browser Docker/PostgreSQL kiểm tra lưu ngưỡng, lỗi API, ack, đổi thiết bị, tuổi mẫu và mobile đạt.
+  Chi tiết: development-2026-10-21.md; hướng dẫn phần cứng: hardware-bringup.md.
+- Chưa flash hoặc thử các chức năng với linh kiện thật; CAL-001 và TEST-002/003 còn chờ nhận hàng.

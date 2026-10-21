@@ -1,5 +1,13 @@
 # Dự án và mã nguồn tham khảo
 
+## Tham khảo cho đề tài bể cá — 19/10/2026
+
+- [FishMaster](https://github.com/ALNezar/FishMaster), đã đọc code tại commit 92d39059eb8e72e86e55619130ab452e40085a75.
+  Tham khảo chia firmware thành module, bộ chỉ số pH/nhiệt độ/độ đục và thiết kế dashboard.
+  Chưa chạy hệ thống đó. Không sao chép công thức NTU tuyến tính hoặc hệ số pH chưa hiệu chuẩn.
+  Giữ stack hiện có thay vì chuyển sang Spring Boot/React. Repo có giấy phép MIT.
+- Phần khảo sát ngập dưới đây được giữ làm lịch sử giai đoạn trước chuyển đề tài.
+
 > Khảo sát ngày 09/10/2026.
 
 Các repository dưới đây được dùng để học cách tổ chức và kiểm chứng ý tưởng. Không repository nào khớp hoàn toàn với phạm vi đồ án. Trước khi sử dụng lại code, cần đọc giấy phép, hiểu luồng xử lý và ghi nguồn trong báo cáo.
