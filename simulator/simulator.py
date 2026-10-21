@@ -28,14 +28,14 @@ def env_float(name: str, default: float) -> float:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Gửi telemetry giả lập của trạm quan trắc ngập qua MQTT."
+        description="Gửi telemetry pH, nhiệt độ và độ đục tương đối của bể cá qua MQTT."
     )
     parser.add_argument(
         "--scenario",
         choices=SCENARIOS,
         default=os.getenv("SIMULATOR_SCENARIO", "normal"),
     )
-    parser.add_argument("--device-id", default=os.getenv("DEVICE_ID", "node-001"))
+    parser.add_argument("--device-id", default=os.getenv("DEVICE_ID", "tank-001"))
     parser.add_argument("--host", default=os.getenv("MQTT_HOST", "localhost"))
     parser.add_argument("--port", type=int, default=env_int("MQTT_PORT", 1884))
     parser.add_argument(
@@ -75,8 +75,8 @@ def publish(client: mqtt.Client, topic: str, payload: dict[str, Any], retain: bo
 
 def main() -> int:
     args = parse_args()
-    telemetry_topic = f"flood-monitoring/devices/{args.device_id}/telemetry"
-    status_topic = f"flood-monitoring/devices/{args.device_id}/status"
+    telemetry_topic = f"aquarium-monitoring/devices/{args.device_id}/telemetry"
+    status_topic = f"aquarium-monitoring/devices/{args.device_id}/status"
     stopped = threading.Event()
     connected = threading.Event()
     offline_published = False

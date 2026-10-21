@@ -97,7 +97,7 @@ def main() -> int:
     )
     try:
         time.sleep(0.5)
-        run_simulator(ws_device, "flood", 2)
+        run_simulator(ws_device, "turbidity-high", 2)
         output, _ = probe.communicate(timeout=25)
     except Exception:
         probe.kill()

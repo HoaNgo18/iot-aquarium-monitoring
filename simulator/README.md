@@ -1,54 +1,36 @@
-# Telemetry simulator
+# Aquarium telemetry simulator v2
 
-Simulator thay thế tạm thời ESP32 và cảm biến để backend có dữ liệu MQTT trong khi phần cứng chưa sẵn sàng.
+Phát dữ liệu giả qua MQTT để phát triển khi chưa có cảm biến.
 
-## Kịch bản
+## Docker
+
+```powershell
+docker compose --profile simulator run --rm -e SIMULATOR_SCENARIO=normal -e SIMULATOR_MESSAGE_COUNT=10 simulator
+```
+
+## Python
+
+```powershell
+python -m pip install -r simulator/requirements.txt
+python simulator/simulator.py --host localhost --port 1884 --device-id tank-001 --scenario ph-high --count 5 --interval 1
+python -m unittest discover -s simulator/tests -v
+```
+
+Port phải khớp MQTT_HOST_PORT. Không dùng localhost làm host trong firmware ESP32; dùng IPv4 LAN của máy chủ.
 
 | Kịch bản | Hành vi |
 | --- | --- |
-| `normal` | Mực nước ổn định, lượng mưa thấp |
-| `heavy-rain` | Mưa lớn và mực nước tăng dần |
-| `flood` | Mực nước tăng nhanh, vượt vùng cảnh báo |
-| `sensor-error` | Mỗi bản tin thứ ba có `water_level_cm: null` và trạng thái lỗi |
-| `offline` | Gửi trạng thái offline rồi ngắt, không gửi telemetry |
+| normal | Nhiệt độ 26–28 °C, pH 6.8–7.4, độ đục 10–25% |
+| temperature-low / temperature-high | Nhiệt độ ngoài ngưỡng demo |
+| ph-low / ph-high | pH ngoài ngưỡng demo |
+| turbidity-high | Độ đục tương đối 85–95% |
+| sensor-error | Mỗi mẫu thứ ba có một chỉ số null; luân phiên pH/nhiệt độ/độ đục |
+| offline | Chỉ gửi trạng thái offline, không có telemetry |
 
-## Chạy bằng Docker Compose
+SCENARIO default normal; DEVICE_ID default tank-001; interval default 5 giây; count=0 chạy liên tục.
+Seed default 2026 giúp tái lập số đo. Timestamp dùng UTC; sequence tăng từ 1 mỗi phiên.
 
-Gửi 5 bản tin bình thường rồi dừng:
-
-```powershell
-docker compose --profile simulator run --rm `
-  -e SIMULATOR_MESSAGE_COUNT=5 `
-  -e PUBLISH_INTERVAL_SECONDS=1 `
-  simulator
-```
-
-Đổi kịch bản bằng biến `SIMULATOR_SCENARIO`, ví dụ:
-
-```powershell
-docker compose --profile simulator run --rm `
-  -e SIMULATOR_SCENARIO=flood `
-  -e SIMULATOR_MESSAGE_COUNT=5 `
-  simulator
-```
-
-Không đặt `SIMULATOR_MESSAGE_COUNT` hoặc đặt bằng `0` để chạy liên tục. Nhấn `Ctrl+C` để dừng.
-
-## Chạy trực tiếp bằng Python
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r .\simulator\requirements.txt
-python .\simulator\simulator.py --scenario normal --count 5
-```
-
-Mặc định cách chạy trực tiếp kết nối `localhost:1884`, tương ứng cấu hình `.env` hiện tại. Có thể đổi bằng `--host`, `--port` hoặc các biến `MQTT_HOST`, `MQTT_PORT`.
-
-## Kiểm thử bộ sinh dữ liệu
-
-Các test không cần kết nối MQTT:
-
-```powershell
-python -m unittest discover -s .\simulator\tests -v
-```
+Topic telemetry/status: aquarium-monitoring/devices/{device_id}/telemetry và /status.
+Payload schema v2 xem [README chính](../README.md).
+Telemetry QoS 1, không retained. Status online/offline và Last Will retained; khi thoát gửi offline.
+Không publish vào namespace flood-monitoring cũ.

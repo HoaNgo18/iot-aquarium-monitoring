@@ -18,8 +18,9 @@ try {
         throw "PostgreSQL chưa sẵn sàng."
     }
 
-    $topic = "flood-monitoring/devices/smoke-test/telemetry"
-    $payload = '{"device_id":"smoke-test","timestamp":"2026-10-09T00:00:00Z","water_level_cm":10.0,"rainfall_mm":0.0,"signal_strength_dbm":-50,"sensor_status":"normal"}'
+    # A broker-only topic avoids replaying an old retained measurement into ingestion.
+    $topic = "aquarium-monitoring/diagnostics/smoke-test"
+    $payload = '{"device_id":"smoke-test","message":"broker-check"}'
 
     docker compose exec -T mqtt mosquitto_pub `
         -h 127.0.0.1 `
