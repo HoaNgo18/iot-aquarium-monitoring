@@ -32,4 +32,10 @@ Log kiểm thử lưu trong `output/firmware/` (local, không commit). Export d�
 
 Đã kiểm chứng ngày 21/10: ba environment build; bốn test host với hiệu chuẩn/lọc/PIR và backend SQLite.
 Pipeline PostgreSQL/MQTT đã kiểm chứng riêng ngày 20/10; chưa phải dữ liệu từ ESP32.
-Chưa kiểm chứng: F01–F11 trên ESP32, cảm biến và hiệu chuẩn thật. Xem hardware-bringup.md.
+Ngày 22/10 đã nạp esp32-fake lên ESP32-D0WD-V3/4 MB/COM3. Lượt đầu dùng mạng 5 GHz bị retry;
+đổi sang 2.4 GHz/kênh 11 và nạp lại đã đạt NTP/MQTT/PUBACK, 12 mẫu serial khớp PostgreSQL/REST.
+Playwright nhận WebSocket từ board và đối chiếu ba giá trị trên DOM; một lượt độ đục cao ba mẫu
+đã tạo cảnh báo critical #25 và cảnh báo kết thúc khi về normal. Phục hồi có ba frame mới khớp REST/UI.
+Lượt recovery serial checker bị lặp/lỗi ký tự và lỗi JSON; chưa kết luận nguyên nhân, có DIAG-001.
+F01/F02 mới có một phần bằng chứng, chưa đủ số boot/kịch bản/lặp theo bảng; F03–F11 chưa thực hiện đầy đủ.
+Xem esp32-bringup-2026-10-22.md và hardware-bringup.md; chưa kiểm chứng cảm biến thật.

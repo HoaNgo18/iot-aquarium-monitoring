@@ -1,0 +1,229 @@
+<a class="skip-link" href="#main-content">Bỏ qua đến nội dung chính</a>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="AquaSense - Trang tổng quan">
+          <span class="brand__mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" role="img">
+              <path d="M26.8 8.8c-6.2.2-11 2.3-14.4 6.3a17.1 17.1 0 0 0-7.2-.8c2 1.8 3.3 3.5 4 5.2a15 15 0 0 0-2.4 5.6c3.1-1.1 5.4-2.6 7-4.5 4 2 8.7 2.3 13.8.9-2.2-2-3.2-4-3-6.1.2-2.2.9-4.4 2.2-6.6Z" />
+              <circle cx="21.7" cy="12.4" r="1.2" />
+            </svg>
+          </span>
+          <span>
+            <strong>AquaSense</strong>
+            <small>Giám sát bể nuôi</small>
+          </span>
+        </a>
+
+        <div class="topbar__actions">
+          <label class="device-select">
+            <span class="sr-only">Chọn thiết bị</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 5h14v10H5zM8 19h8M12 15v4" /></svg>
+            <select id="device-select" aria-label="Chọn thiết bị">
+              <option value="tank-demo-001">Bể cá rô phi 01 · tank-demo-001</option>
+              <option value="tank-demo-002">Bể cá chép 02 · tank-demo-002</option>
+              <option value="tank-demo-003">Bể thử nghiệm · tank-demo-003</option>
+            </select>
+          </label>
+          <button class="button button--secondary" id="add-device" type="button">Thêm mã</button>
+          <button class="button button--secondary" id="refresh-button" type="button">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" /></svg>
+            <span>Làm mới</span>
+          </button>
+          <div class="connection-pill" id="connection-pill" role="status" aria-live="polite">
+            <span class="status-dot status-dot--live" aria-hidden="true"></span>
+            <span><strong>Online</strong><small>Đang truyền trực tiếp</small></span>
+          </div>
+        </div>
+      </header>
+
+      <main id="main-content" class="dashboard" tabindex="-1">
+        <section class="device-strip" aria-labelledby="page-title">
+          <div>
+            <p class="eyebrow">TỔNG QUAN THỜI GIAN THỰC</p>
+            <h1 id="page-title">Giám sát bể nuôi cá</h1>
+          </div>
+          <div class="device-strip__meta">
+            <div><span>Mã thiết bị</span><strong id="device-id">tank-demo-001</strong></div>
+            <div><span>Lần lấy mẫu</span><strong id="sample-time">Vừa xong</strong></div>
+            <span class="live-badge" id="live-badge"><span aria-hidden="true"></span> LIVE</span>
+          </div>
+        </section>
+
+        <section class="kpi-grid" aria-label="Các chỉ số chính">
+          <article class="kpi-card" id="temperature-card" data-status="normal">
+            <div class="kpi-card__head">
+              <span class="metric-icon metric-icon--temperature" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M14 14.8V5a4 4 0 0 0-8 0v9.8a6 6 0 1 0 8 0ZM10 6v10" /></svg>
+              </span>
+              <span class="status-badge status-badge--normal">✓ Bình thường</span>
+            </div>
+            <p class="kpi-card__label">Nhiệt độ nước</p>
+            <div class="kpi-card__value"><span data-value>--</span><small>°C</small></div>
+            <div class="kpi-card__footer">
+              <span class="trend" data-trend>— Đang chờ dữ liệu</span>
+              <canvas class="sparkline" aria-hidden="true"></canvas>
+            </div>
+          </article>
+
+          <article class="kpi-card" id="ph-card" data-status="normal">
+            <div class="kpi-card__head">
+              <span class="metric-icon metric-icon--ph" aria-hidden="true">pH</span>
+              <span class="status-badge status-badge--normal">✓ Bình thường</span>
+            </div>
+            <p class="kpi-card__label">Độ pH</p>
+            <div class="kpi-card__value"><span data-value>--</span></div>
+            <div class="kpi-card__footer">
+              <span class="trend" data-trend>— Đang chờ dữ liệu</span>
+              <canvas class="sparkline" aria-hidden="true"></canvas>
+            </div>
+          </article>
+
+          <article class="kpi-card" id="turbidity-card" data-status="normal">
+            <div class="kpi-card__head">
+              <span class="metric-icon metric-icon--turbidity" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 3s6 6.4 6 11a6 6 0 1 1-12 0c0-4.6 6-11 6-11Z" /></svg>
+              </span>
+              <span class="status-badge status-badge--normal">✓ Bình thường</span>
+            </div>
+            <p class="kpi-card__label">Độ đục tương đối</p>
+            <div class="kpi-card__value"><span data-value>--</span><small>%</small></div>
+            <div class="kpi-card__footer">
+              <span class="trend" data-trend>— Đang chờ dữ liệu</span>
+              <canvas class="sparkline" aria-hidden="true"></canvas>
+            </div>
+          </article>
+
+          <article class="kpi-card device-card" id="device-card" data-status="normal">
+            <div class="kpi-card__head">
+              <span class="metric-icon metric-icon--device" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3" /><path d="M8 7h8M8 11h5M9 17h.01M15 17h.01" /></svg>
+              </span>
+              <span class="status-badge status-badge--normal">● Kết nối tốt</span>
+            </div>
+            <p class="kpi-card__label">Thiết bị</p>
+            <div class="device-status-line"><span class="status-dot" aria-hidden="true"></span><strong data-value>Online</strong></div>
+            <div class="kpi-card__footer device-card__footer">
+              <span class="signal" aria-label="Cường độ sóng tốt">
+                <span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                <strong id="rssi-value">-- dBm</strong>
+              </span>
+              <span id="last-seen">Chưa có dữ liệu</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-grid">
+          <article class="panel chart-panel" aria-labelledby="history-title">
+            <div class="panel__header chart-panel__header">
+              <div>
+                <span class="section-kicker">PHÂN TÍCH</span>
+                <h2 id="history-title">Lịch sử chỉ số</h2>
+              </div>
+              <div class="chart-controls">
+                <label>
+                  <span class="sr-only">Chọn chỉ số</span>
+                  <select id="metric-select">
+                    <option value="temperature">Nhiệt độ</option>
+                    <option value="ph">Độ pH</option>
+                    <option value="turbidity">Độ đục</option>
+                  </select>
+                </label>
+                <div class="segmented" role="group" aria-label="Chọn khoảng thời gian">
+                  <button type="button" data-range="15">15 phút</button>
+                  <button type="button" data-range="60" class="is-active" aria-pressed="true">1 giờ</button>
+                  <button type="button" data-range="360">6 giờ</button>
+                  <button type="button" data-range="1440">24 giờ</button>
+                </div>
+              </div>
+            </div>
+            <div class="chart-legend">
+              <span><i class="legend-line" id="metric-legend-line"></i><span id="metric-legend">Nhiệt độ</span></span>
+              <span><i class="legend-zone"></i>Vùng an toàn</span>
+              <span><i class="legend-threshold"></i>Ngưỡng cấu hình</span>
+              <a href="#threshold-form">Chỉnh ngưỡng <span aria-hidden="true">→</span></a>
+            </div>
+            <div class="chart-wrap" id="chart-wrap">
+              <canvas id="history-chart" role="img" aria-label="Biểu đồ lịch sử nhiệt độ trong 1 giờ qua"></canvas>
+              <div class="chart-tooltip" id="chart-tooltip" role="status" aria-hidden="true"></div>
+              <div class="chart-state" id="chart-state" hidden></div>
+            </div>
+            <div class="chart-note">
+              <span id="chart-summary">Hiển thị 60 mẫu gần nhất</span>
+              <span>Múi giờ Việt Nam (UTC+7)</span>
+            </div>
+          </article>
+
+          <article class="panel alerts-panel" aria-labelledby="alerts-title">
+            <div class="panel__header">
+              <div>
+                <span class="section-kicker">SỰ KIỆN</span>
+                <h2 id="alerts-title">Cảnh báo</h2>
+              </div>
+              <span class="alert-count" id="alert-count">0</span>
+            </div>
+            <div class="tabs" role="tablist" aria-label="Loại cảnh báo">
+              <button id="active-tab" role="tab" aria-selected="true" aria-controls="alert-content" data-tab="active">Đang xảy ra</button>
+              <button role="tab" aria-selected="false" aria-controls="alert-content" data-tab="recent">Gần đây</button>
+            </div>
+            <div id="alert-content" class="alert-content" role="tabpanel" aria-labelledby="active-tab"></div>
+          </article>
+        </section>
+
+        <section class="panel threshold-panel" id="threshold-form" aria-labelledby="threshold-title">
+          <div class="panel__header threshold-panel__header">
+            <div>
+              <span class="section-kicker">THIẾT LẬP THIẾT BỊ</span>
+              <h2 id="threshold-title">Cấu hình ngưỡng an toàn</h2>
+              <p>Cảnh báo được đánh giá theo từng mẫu đo của thiết bị đang chọn.</p>
+            </div>
+            <div class="unsaved-badge" id="unsaved-badge" hidden><span aria-hidden="true">●</span> Có thay đổi chưa lưu</div>
+          </div>
+
+          <form id="threshold-settings" novalidate>
+            <div class="threshold-groups">
+              <fieldset class="threshold-group">
+                <legend><span class="metric-dot metric-dot--temperature"></span>Nhiệt độ nước</legend>
+                <div class="field-pair">
+                  <label class="field"><span>Tối thiểu</span><span class="input-shell"><input name="tempMin" type="number" step="0.1" min="-55" max="125" inputmode="decimal" /><span>°C</span></span><small class="field-error"></small></label>
+                  <label class="field"><span>Tối đa</span><span class="input-shell"><input name="tempMax" type="number" step="0.1" min="-55" max="125" inputmode="decimal" /><span>°C</span></span><small class="field-error"></small></label>
+                </div>
+                <p class="field-hint">Miền cảm biến: -55–125 °C; chọn ngưỡng phù hợp loài cá.</p>
+              </fieldset>
+
+              <fieldset class="threshold-group">
+                <legend><span class="metric-dot metric-dot--ph"></span>Độ pH</legend>
+                <div class="field-pair">
+                  <label class="field"><span>Tối thiểu</span><span class="input-shell"><input name="phMin" type="number" step="0.1" min="0" max="14" inputmode="decimal" /></span><small class="field-error"></small></label>
+                  <label class="field"><span>Tối đa</span><span class="input-shell"><input name="phMax" type="number" step="0.1" min="0" max="14" inputmode="decimal" /></span><small class="field-error"></small></label>
+                </div>
+                <p class="field-hint">Thang đo hợp lệ: 0–14</p>
+              </fieldset>
+
+              <fieldset class="threshold-group">
+                <legend><span class="metric-dot metric-dot--turbidity"></span>Độ đục tương đối</legend>
+                <div class="field-pair">
+                  <label class="field"><span>Cảnh báo</span><span class="input-shell"><input name="turbidityWarn" type="number" step="1" min="0" max="100" inputmode="numeric" /><span>%</span></span><small class="field-error"></small></label>
+                  <label class="field"><span>Nguy hiểm</span><span class="input-shell"><input name="turbidityDanger" type="number" step="1" min="0" max="100" inputmode="numeric" /><span>%</span></span><small class="field-error"></small></label>
+                </div>
+                <p class="field-hint">0% trong · 100% đục</p>
+              </fieldset>
+            </div>
+            <div class="form-actions">
+              <p id="form-status" aria-live="polite">Ngưỡng đang áp dụng cho <strong>tank-demo-001</strong></p>
+              <div>
+                <button class="button button--secondary" id="reload-thresholds" type="button">
+                  <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" /></svg>
+                  Tải lại ngưỡng
+                </button>
+                <button class="button button--primary" id="save-thresholds" type="submit" disabled>
+                  <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>
+                  Lưu ngưỡng
+                </button>
+              </div>
+            </div>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>

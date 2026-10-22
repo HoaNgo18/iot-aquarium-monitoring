@@ -1,6 +1,6 @@
 # Nhận linh kiện và cấu hình firmware
 
-> Cập nhật 21/10/2026. Đã có code/build/test host; chưa lắp hoặc kiểm chứng trên phần cứng thật.
+> Cập nhật 22/10/2026. ESP32 fake đã chạy toàn tuyến trên board thật; chưa lắp/kiểm chứng các cảm biến thật.
 > Người thực hiện xác nhận đã đặt DS18B20, PH-4502C, bộ độ đục và HC-SR501; dự kiến nhận trong vài ngày.
 
 ## Cấu hình ban đầu

@@ -7,7 +7,7 @@
 > Đây là plan hiện hành; bản transition-plan-fish-monitoring.md ngày 15/10 chỉ còn là tài liệu lịch sử.
 > Thư mục làm việc hiện tại: D:\DATN\iot-flood-monitoring.
 > Tên repository GitHub và Compose project: iot-aquarium-monitoring; thư mục local giữ nguyên.
-> Ưu tiên hiện tại: nhận linh kiện, xác nhận board/pinout/điện áp, flash và hiệu chuẩn theo hardware-bringup.md; phần mềm và driver đã phát triển thêm ngày 21/10.
+> Ưu tiên hiện tại: ESP32 fake đã chạy toàn tuyến qua Wi-Fi 2.4 GHz ngày 22/10. Tiếp theo kiểm tra reconnect/Last Will, khoanh vùng UART lặp/lỗi, rồi tích hợp và hiệu chuẩn linh kiện khi nhận hàng.
 
 ## 1. Phạm vi
 
@@ -66,10 +66,11 @@ docker compose config --quiet và git diff --check đã đạt.
 
 | Ưu tiên | ID | Trạng thái | Đầu việc / điều kiện hoàn thành |
 | --- | --- | --- | --- |
-| P0 | HW-001 | VERIFY | Ba environment fake/sensors/alias build đạt cho esp32dev; còn xác nhận đúng board, flash và log serial |
-| P0 | FW-001 | VERIFY | Firmware fake v2, NTP, Wi-Fi/MQTT reconnect và Last Will; bốn test host/69 payload đạt; chưa thử mạng trên board |
+| P0 | HW-001 | DONE | Ba environment build; ngày 22/10 nhận diện ESP32-D0WD-V3/4 MB/COM3, sao lưu đầy đủ, nạp esp32-fake ở 115200 và boot FAKE/tank-demo-001 đạt |
+| P0 | FW-001 | VERIFY | Đã nạp lại Wi-Fi 2.4 GHz/kênh 11, đạt NTP/MQTT/PUBACK, 12 mẫu serial khớp PostgreSQL/REST, WebSocket/DOM và một chu kỳ độ đục cao/phục hồi. Còn boot lặp, reconnect/Last Will và chạy dài; chưa nghiệm thu toàn bộ F01–F08 |
 | P0 | HW-002 | IN PROGRESS | Đã đặt đủ bốn loại; chốt DS18B20/PH-4502C/SR501, có ảnh độ đục; còn ngày nhận, mã độ đục và mức áp/pinout thật |
 | P0 | FW-002 | VERIFY | Có driver DS18B20 không chặn, ADC1 lọc/hiệu chuẩn hai điểm và chẩn đoán mV; chưa thử đầu dò thật, analog chưa hiệu chuẩn vẫn null |
+| P0 | DIAG-001 | TODO | Khoanh vùng log UART lặp/lỗi khi đóng/mở COM: lượt recovery serial checker lỗi giải mã JSON; phục hồi đã xác minh riêng bằng ba frame WebSocket mới khớp REST và UI. Chưa kết luận driver/buffer hay firmware |
 | P0 | CAL-001 | TODO | Hiệu chuẩn pH bằng buffer, đối chiếu nhiệt độ, xác lập chỉ số độ đục tương đối |
 | P0 | TEST-001 | IN PROGRESS | Có F01–F11 và hardware-bringup.md; cần bổ sung dụng cụ tham chiếu/biểu mẫu kết quả theo linh kiện nhận được |
 | P0 | TEST-002 | TODO | Tích hợp cảm biến thật → MQTT → PostgreSQL → dashboard; chụp ảnh/lưu log |
@@ -103,7 +104,7 @@ Mở repository tại D:\DATN\iot-flood-monitoring trong Codex/IDE. Nếu phiên
 cần mở lại workspace theo đường dẫn mới để thao tác bình thường.
 
 1. Pipeline Docker v2 đã đạt; kiểm tra health nếu khởi động lại môi trường.
-2. Xác nhận model ESP32/cổng COM, điền firmware/include/config.local.h và flash esp32-fake; thực hiện firmware-test-plan.md. Broker hiện mở cổng LAN 1884; dùng IP LAN máy chạy Docker, không dùng localhost trên ESP32.
+2. ESP32-D0WD-V3/4 MB/COM3 đã nạp esp32-fake và chạy toàn tuyến qua mạng 2.4 GHz; hiện để normal/tank-demo-001. Broker LAN 1884; kiểm tra lại IP máy nếu đổi mạng. Tiếp tục các lượt lặp/reconnect/Last Will trong firmware-test-plan.md và DIAG-001. Xem esp32-bringup-2026-10-22.md; không ghi mật khẩu/binary vào Git.
 3. Khi nhận hàng, xác nhận pinout/nguồn/đầu ra, cập nhật BOM và thực hiện docs/hardware-bringup.md; firmware sensors có sẵn nhưng chưa hiệu chuẩn.
 4. Cấu hình ngưỡng sau khi chọn loài cá và hiệu chuẩn. Không lấy ngưỡng mặc định làm kết luận sinh học.
 
@@ -166,3 +167,10 @@ PIR phát hiện người bật LED tiếp tục là phần mở rộng sau khi 
   Browser Docker/PostgreSQL kiểm tra lưu ngưỡng, lỗi API, ack, đổi thiết bị, tuổi mẫu và mobile đạt.
   Chi tiết: development-2026-10-21.md; hướng dẫn phần cứng: hardware-bringup.md.
 - Chưa flash hoặc thử các chức năng với linh kiện thật; CAL-001 và TEST-002/003 còn chờ nhận hàng.
+
+## 11. Hợp nhất nguồn — 23/10/2026
+
+UI AquaSense từ D:\ĐATN đã được đưa vào frontend Vue của repo chính D:\DATN\iot-flood-monitoring.
+Giữ WebSocket/reconnect/heartbeat và backend hiện hữu; dùng một web Docker tại localhost:5173.
+Không phát triển tiếp bản standalone 4173/4174. Xem consolidation-2026-10-23.md.
+Việc tiếp theo vẫn là F01–F08/DIAG-001 và phần cứng/hiệu chuẩn theo các mục trên.

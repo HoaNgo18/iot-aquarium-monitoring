@@ -1,0 +1,37 @@
+const fields = { tempMin: 'temperature_min_c', tempMax: 'temperature_max_c', phMin: 'ph_min', phMax: 'ph_max', turbidityWarn: 'turbidity_warning_pct', turbidityDanger: 'turbidity_critical_pct' };
+export function decodeThresholds(row) {
+  return row && Object.fromEntries(Object.entries(fields).map(([key, field]) => [key, row[field]]));
+}
+export function encodeThresholds(row) {
+  return Object.fromEntries(Object.entries(fields).map(([key, field]) => [field, row[key]]));
+}
+export function decodeReading(row) {
+  return row && { id: row.id, time: new Date(row.measured_at), temperature: row.temperature_c, ph: row.ph, turbidity: row.turbidity_pct, rssi: row.signal_strength_dbm };
+}
+export function metricStatus(metric, value, thresholds) {
+  if (!Number.isFinite(value) || !thresholds) return 'neutral';
+  if (metric === 'turbidity') return value >= thresholds.turbidityDanger ? 'danger' : value >= thresholds.turbidityWarn ? 'warning' : 'normal';
+  const [min, max] = metric === 'ph' ? [thresholds.phMin, thresholds.phMax] : [thresholds.tempMin, thresholds.tempMax];
+  return value < min || value > max ? 'warning' : 'normal';
+}
+export async function request(deviceId, suffix = '', options = {}) {
+  const { nullable = false, signal, ...init } = options;
+  const response = await fetch(`/api/v1/devices/${encodeURIComponent(deviceId)}${suffix}`, {
+    ...init, headers: { 'Content-Type': 'application/json' },
+    signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(10000)]) : AbortSignal.timeout(10000),
+  });
+  if (nullable && response.status === 404) return null;
+  if (!response.ok) throw new Error(`Yêu cầu thất bại (HTTP ${response.status}). Vui lòng thử lại.`);
+  return response.json();
+}
+export async function snapshot(deviceId, minutes, signal) {
+  const from = new Date(Date.now() - minutes * 60000).toISOString();
+  const [device, latest, history, thresholds, alerts] = await Promise.all([
+    request(deviceId, '', { signal, nullable: true }),
+    request(deviceId, '/telemetry/latest', { signal, nullable: true }),
+    request(deviceId, `/telemetry?from=${encodeURIComponent(from)}&limit=500`, { signal }),
+    request(deviceId, '/thresholds', { signal, nullable: true }),
+    request(deviceId, '/alerts?limit=50', { signal }),
+  ]);
+  return { device, latest: decodeReading(latest), history: history.map(decodeReading).sort((a,b) => a.time - b.time), thresholds: decodeThresholds(thresholds), alerts };
+}

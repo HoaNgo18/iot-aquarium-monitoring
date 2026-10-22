@@ -1,8 +1,11 @@
 # Firmware ESP32 — giám sát bể cá
 
 Firmware nền đã build được cho **ESP32 Dev Module / ESP32-WROOM thông thường** (`esp32dev`).
-Chưa xác nhận model board của người thực hiện; không dùng nguyên cấu hình này cho ESP32-C3/S3.
-Chưa flash hoặc xác minh Wi-Fi/MQTT/cảm biến trên board thật. Cập nhật driver ngày 21/10/2026.
+Ngày 22/10 nhận diện ESP32-D0WD-V3 rev3.1, flash 4 MB, CP210x/COM3; esp32-fake đã nạp và boot thành công.
+Không dùng nguyên cấu hình này cho ESP32-C3/S3. Đã kiểm tra mạng 2.4 GHz/NTP/MQTT,
+12 mẫu khớp PostgreSQL/REST và web realtime; cảnh báo độ đục cao đã mở rồi đóng khi về normal.
+Còn kiểm tra reconnect/Last Will, chạy dài và hiện tượng UART lặp/lỗi khi mở lại COM; cảm biến thật chưa kiểm chứng.
+[Kết quả và giới hạn kiểm thử](../docs/esp32-bringup-2026-10-22.md).
 
 ## Chế độ build
 

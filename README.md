@@ -3,14 +3,18 @@
 Đồ án tốt nghiệp của Ngô Tuấn Hòa — MSSV 20225189.
 
 Phiên bản 0.2 chuyển nền tảng giám sát ngập sang giám sát **pH, nhiệt độ nước và độ đục tương đối**.
-Đã có firmware ESP32 giả lập và driver DS18B20/analog hiệu chuẩn; chưa flash hoặc kiểm chứng cảm biến trên board thật.
+Đã nạp esp32-fake lên ESP32 thật ngày 22/10; Wi-Fi 2.4 GHz → MQTT → PostgreSQL/REST → web realtime và một chu kỳ cảnh báo độ đục đã đạt.
+Driver DS18B20/analog đã build nhưng chưa kiểm chứng cảm biến thật.
+
+Bản nguồn chính duy nhất: `D:\DATN\iot-flood-monitoring`; frontend đã hợp nhất UI AquaSense xanh biển vào Vue.
+Xem [biên bản hợp nhất](docs/consolidation-2026-10-23.md). Các preview 4173/4174 đã ngừng; dùng cổng 5173.
 
 ## Phạm vi hiện tại
 
 - MQTT ingestion, kiểm tra dữ liệu và chống bản tin trùng.
 - PostgreSQL, REST latest/history, trạng thái thiết bị và ngưỡng cấu hình.
 - Cảnh báo nhiệt độ/pH ngoài khoảng, độ đục cao, cảm biến lỗi và offline.
-- Vue 3 dashboard, ba chỉ số, lịch sử 1/6/24 giờ và danh sách cảnh báo.
+- Vue 3 dashboard, ba chỉ số, lịch sử 15 phút/1/6/24 giờ và danh sách cảnh báo.
 - WebSocket với heartbeat, reconnect và đồng bộ bù bằng REST.
 - Form cấu hình ngưỡng, xác nhận cảnh báo và cảnh báo mẫu quá cũ trên dashboard.
 - Firmware có PIR phát hiện người bật LED tùy chọn, mặc định tắt; phần nước vẫn là MVP.
@@ -27,7 +31,7 @@ docker compose up -d --build
 docker compose ps
 ```
 
-- Web: http://localhost:5173 — mặc định chọn `tank-001`.
+- Web: http://localhost:5173 — mặc định chọn `tank-demo-001`.
 - API: http://localhost:8000/docs.
 - Nếu cổng MQTT 1883 đã được dùng, đặt `MQTT_HOST_PORT=1884` trong `.env`.
 
