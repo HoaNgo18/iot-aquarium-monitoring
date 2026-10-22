@@ -6,7 +6,7 @@ Phiên bản 0.2 chuyển nền tảng giám sát ngập sang giám sát **pH, n
 Đã nạp esp32-fake lên ESP32 thật ngày 22/10; Wi-Fi 2.4 GHz → MQTT → PostgreSQL/REST → web realtime và một chu kỳ cảnh báo độ đục đã đạt.
 Driver DS18B20/analog đã build nhưng chưa kiểm chứng cảm biến thật.
 
-Bản nguồn chính duy nhất: `D:\DATN\iot-flood-monitoring`; frontend đã hợp nhất UI AquaSense xanh biển vào Vue.
+Bản nguồn chính duy nhất: `D:\DATN\iot-aquarium`; frontend đã hợp nhất UI AquaSense xanh biển vào Vue.
 Xem [biên bản hợp nhất](docs/consolidation-2026-10-23.md). Các preview 4173/4174 đã ngừng; dùng cổng 5173.
 
 ## Phạm vi hiện tại
@@ -39,7 +39,7 @@ Repository GitHub và Compose project dùng tên **iot-aquarium-monitoring**.
 Repository: [HoaNgo18/iot-aquarium-monitoring](https://github.com/HoaNgo18/iot-aquarium-monitoring).
 Các container có tên `iot-aquarium-monitoring-{service}-1`.
 
-Máy phát triển hiện tại giữ thư mục local `D:\DATN\iot-flood-monitoring` và database/user cũ để tránh ảnh hưởng cấu hình đang dùng.
+Thư mục local hiện tại là `D:\DATN\iot-aquarium`. Database/user được giữ nguyên để bảo toàn dữ liệu.
 File local `compose.override.yaml` (không commit) gắn lại hai volume dữ liệu cũ ở chế độ external;
 đây là chủ ý bảo toàn dữ liệu, không phải container còn mang tên cũ.
 Clone mới không cần override này và sẽ tạo volume theo tên project mới.

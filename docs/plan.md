@@ -5,8 +5,8 @@
 > Hạn kỹ thuật trong Phiếu giao nhiệm vụ: 05/01/2027.
 > Lịch trong timeline.txt: thông tin đề tài đến 01/11; xét bảo vệ 27/12; nộp đến 17h 12/01/2027.
 > Đây là plan hiện hành; bản transition-plan-fish-monitoring.md ngày 15/10 chỉ còn là tài liệu lịch sử.
-> Thư mục làm việc hiện tại: D:\DATN\iot-flood-monitoring.
-> Tên repository GitHub và Compose project: iot-aquarium-monitoring; thư mục local giữ nguyên.
+> Thư mục làm việc hiện tại: D:\DATN\iot-aquarium.
+> Tên repository GitHub và Compose project: iot-aquarium-monitoring; thư mục local: iot-aquarium.
 > Ưu tiên hiện tại: ESP32 fake đã chạy toàn tuyến qua Wi-Fi 2.4 GHz ngày 22/10. Tiếp theo kiểm tra reconnect/Last Will, khoanh vùng UART lặp/lỗi, rồi tích hợp và hiệu chuẩn linh kiện khi nhận hàng.
 
 ## 1. Phạm vi
@@ -49,7 +49,7 @@ Việc GVHD duyệt và cập nhật QLĐT vẫn cần người thực hiện x�
 | AQ-010 | DONE | Compose rebuild đạt, bốn dịch vụ healthy; smoke MQTT → PostgreSQL → REST/WebSocket và 15 kiểm tra live về cảnh báo/null/chống trùng/Last Will đạt ngày 20/10 |
 | AQ-011 | DONE | Form ghi đủ sáu ngưỡng, xác nhận cảnh báo idempotent, chỉ báo mẫu cũ từ 60 giây/lệch giờ tương lai trên web; đã kiểm tra browser với PostgreSQL thật ngày 21/10 |
 
-Ngày 20/10 xác nhận thư mục gốc đã đổi từ D:\ĐATN sang D:\DATN; thư mục repository vẫn là iot-flood-monitoring.
+Ngày 20/10 xác nhận thư mục gốc đã đổi từ D:\ĐATN sang D:\DATN; thư mục repository vẫn là iot-aquarium.
 Tại thời điểm 20/10 giữ nguyên tên Compose project, database và volume để sử dụng lại dữ liệu đã có.
 Ngày 22/10 đổi tên project/container và repository GitHub sang iot-aquarium-monitoring;
 database/user và volume cũ được gắn lại bằng local override external, không khởi tạo lại dữ liệu.
@@ -100,7 +100,7 @@ docker compose config --quiet và git diff --check đã đạt.
 
 Bắt đầu phiên sau bằng git status, README, tài liệu kiến trúc và file này.
 Có các thay đổi chưa commit từ trước đợt chuyển đổi; không reset hoặc ghi đè phần không liên quan.
-Mở repository tại D:\DATN\iot-flood-monitoring trong Codex/IDE. Nếu phiên vẫn cấp quyền cho D:\ĐATN,
+Mở repository tại D:\DATN\iot-aquarium trong Codex/IDE. Nếu phiên vẫn cấp quyền cho D:\ĐATN,
 cần mở lại workspace theo đường dẫn mới để thao tác bình thường.
 
 1. Pipeline Docker v2 đã đạt; kiểm tra health nếu khởi động lại môi trường.
@@ -170,7 +170,7 @@ PIR phát hiện người bật LED tiếp tục là phần mở rộng sau khi 
 
 ## 11. Hợp nhất nguồn — 23/10/2026
 
-UI AquaSense từ D:\ĐATN đã được đưa vào frontend Vue của repo chính D:\DATN\iot-flood-monitoring.
+UI AquaSense từ D:\ĐATN đã được đưa vào frontend Vue của repo chính D:\DATN\iot-aquarium.
 Giữ WebSocket/reconnect/heartbeat và backend hiện hữu; dùng một web Docker tại localhost:5173.
 Không phát triển tiếp bản standalone 4173/4174. Xem consolidation-2026-10-23.md.
 Việc tiếp theo vẫn là F01–F08/DIAG-001 và phần cứng/hiệu chuẩn theo các mục trên.

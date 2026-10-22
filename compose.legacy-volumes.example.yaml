@@ -5,7 +5,7 @@
 volumes:
   mqtt_data:
     external: true
-    name: iot-flood-monitoring_mqtt_data
+    name: iot-aquarium_mqtt_data
   postgres_data:
     external: true
-    name: iot-flood-monitoring_postgres_data
+    name: iot-aquarium_postgres_data

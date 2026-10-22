@@ -1,7 +1,7 @@
 # Kiểm chứng Docker/PostgreSQL — 20/10/2026
 
 Ngày theo múi giờ Asia/Saigon. Payload và log container dùng UTC.
-Repository: D:\DATN\iot-flood-monitoring. Docker Engine 29.0.1, API phiên bản 0.2.0.
+Repository: D:\DATN\iot-aquarium. Docker Engine 29.0.1, API phiên bản 0.2.0.
 
 ## Môi trường và nâng cấp
 

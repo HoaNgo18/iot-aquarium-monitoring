@@ -7,15 +7,15 @@ Tên theo đề tài hiện tại: **iot-aquarium-monitoring**.
 - Compose project mặc định và `.env` local: iot-aquarium-monitoring.
 - Container: iot-aquarium-monitoring-db-1, mqtt-1, backend-1 và frontend-1.
 - Package frontend: iot-aquarium-monitoring-frontend; tên trong package-lock đồng bộ.
-- Chưa đổi thư mục local D:\DATN\iot-flood-monitoring, database flood_monitoring hoặc user flood_app.
+- Chưa đổi thư mục local D:\DATN\iot-aquarium, database flood_monitoring hoặc user flood_app.
 - Tại bước đổi tên chỉ cập nhật repository/origin; các thay đổi chức năng được chia commit và push riêng sau đó theo yêu cầu người thực hiện.
 
 ## Bảo toàn dữ liệu trên máy hiện tại
 
 Hai volume đã tồn tại được giữ nguyên:
 
-- iot-flood-monitoring_postgres_data.
-- iot-flood-monitoring_mqtt_data.
+- iot-aquarium_postgres_data.
+- iot-aquarium_mqtt_data.
 
 `compose.override.yaml` local khai báo external và chỉ rõ hai tên trên.
 Compose tự đọc file này cùng compose.yaml; đổi tên project không làm tạo database rỗng.
